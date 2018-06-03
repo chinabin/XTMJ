@@ -1,0 +1,30 @@
+
+
+
+MODULE_LIBS =   \
+          ./libs/Work.o \
+          ./libs/UserMessageMsg.o \
+          ./libs/UserMessage.o \
+          ./libs/UserManager.o \
+          ./libs/User.o \
+          ./libs/RuntimeInfoMsg.o \
+          ./libs/main.o \
+          ./libs/InsideNet.o \
+          ./libs/DeskManager.o \
+          ./libs/Config.o \
+          ./libs/ActiveManager.o \
+
+
+
+MODULE_SRC =     \
+          ./Work.o \
+          ./UserMessageMsg.o \
+          ./UserMessage.o \
+          ./UserManager.o \
+          ./User.o \
+          ./RuntimeInfoMsg.o \
+          ./main.o \
+          ./InsideNet.o \
+          ./DeskManager.o \
+          ./Config.o \
+          ./ActiveManager.o \

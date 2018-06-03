@@ -1,0 +1,80 @@
+[2016-01-27 22:04:18 568] listen ip:127.0.0.1,port:6001
+[2016-01-27 22:06:21 370] listen ip:127.0.0.1,port:6001
+[2016-01-27 22:19:00 363] listen ip:127.0.0.1,port:6001
+[2016-01-27 22:19:13 060] LMsgFactory::CreateMsg msg not exiset msgId:0
+[2016-01-27 22:19:25 348] UserNet::RecvMsgPack recv msgid=2147483646
+[2016-01-27 22:19:25 348] client login ip=123.57.41.73,port=5001,local_port=9430
+[2016-01-29 23:12:16 579] listen ip:127.0.0.1,port:6001
+[2016-01-29 23:12:16 581] InsideNet::RecvMsgPack -2
+[2016-01-29 23:12:16 581] UserNet::RecvMsgPack recv msgid=2147483646
+[2016-01-29 23:12:16 582] client login ip=123.57.41.73,port=5001,local_port=17870
+[2016-01-29 23:12:16 587] InsideNet::RecvMsgPack {"m_msgId":2, "m_errorCode":0, "m_seed":16099124, "m_id":8, "m_gateIp":"123.57.41.73", "m_gatePort":8001}
+[2016-01-29 23:12:16 588] UserNet::RecvMsgPack user recv msgid=2
+[2016-01-29 23:12:16 589] Work::HanderServerMsg 16099124:8:123.57.41.73:8001
+[2016-01-29 23:12:16 589] InsideNet::RecvMsgPack -2
+[2016-01-29 23:12:16 590] UserNet::RecvMsgPack recv msgid=2147483646
+[2016-01-29 23:12:16 590] client login ip=123.57.41.73,port=8001,local_port=17871
+[2016-01-29 23:12:16 627] InsideNet::RecvMsgPack {"m_msgId":12, "m_errorCode":0, "m_id":8, "m_nike":"test2", "m_exp":0, "m_sex":0, "m_face":"", "m_provice":"", "m_city":"", "m_ip":"", "m_new":0, "m_card1":1, "m_card2":1, "m_card3":1}
+[2016-01-29 23:12:16 629] UserNet::RecvMsgPack user recv msgid=12
+[2016-01-29 23:12:16 631] InsideNet::RecvMsgPack {"m_msgId":13, "m_card1":0, "m_card2":0, "m_card3":0}
+[2016-01-29 23:12:16 632] UserNet::RecvMsgPack user recv msgid=13
+[2016-01-29 23:12:16 633] InsideNet::RecvMsgPack {"m_msgId":14, "m_str":"hello welcome"}
+[2016-01-29 23:12:16 634] UserNet::RecvMsgPack user recv msgid=14
+[2016-01-29 23:12:16 635] Work::HanderUserLogin 8:test2
+[2016-01-29 23:12:16 635] Work::HanderUserItem 0:0:0
+[2016-01-29 23:12:16 672] InsideNet::RecvMsgPack 23
+[2016-01-29 23:12:16 672] UserNet::RecvMsgPack recv msgid=23
+[2016-01-29 23:12:16 673] InsideNet::RecvMsgPack {"m_msgId":30, "m_deskId":1, "m_pos":3, "m_ready":-858993460, "m_score":-858993460}
+[2016-01-29 23:12:16 673] UserNet::RecvMsgPack user recv msgid=30
+[2016-01-29 23:12:16 680] InsideNet::RecvMsgPack {"m_msgId":31, "m_userId":5, "m_nike":"test", "m_face":"", "m_sex":0, "m_pos":0, "m_ready":1, "m_score":-858993460, "m_ip":"123.57.41.73"}
+[2016-01-29 23:12:16 681] UserNet::RecvMsgPack user recv msgid=31
+[2016-01-29 23:12:16 683] InsideNet::RecvMsgPack {"m_msgId":31, "m_userId":7, "m_nike":"test1", "m_face":"", "m_sex":0, "m_pos":1, "m_ready":1, "m_score":-858993460, "m_ip":"123.57.41.73"}
+[2016-01-29 23:12:16 686] UserNet::RecvMsgPack user recv msgid=31
+[2016-01-29 23:12:16 686] Work::HanderUserAddRoom -842150451:-842150451
+[2016-01-29 23:12:16 687] Work::HanderUserIntoDesk deskid=1 pos=3 ready=0 score=0
+[2016-01-29 23:12:16 687] Work::HanderUserAddDesk userId=5 pos=0 nike=test score=0
+[2016-01-29 23:12:16 687] Work::HanderUserAddDesk userId=7 pos=1 nike=test1 score=0
+[2016-01-29 23:12:16 705] InsideNet::RecvMsgPack {"m_msgId":37, "m_pos":2}
+[2016-01-29 23:12:16 705] UserNet::RecvMsgPack user recv msgid=37
+[2016-01-29 23:12:16 708] InsideNet::RecvMsgPack {"m_msgId":37, "m_pos":2}
+[2016-01-29 23:12:16 711] UserNet::RecvMsgPack user recv msgid=37
+[2016-01-29 23:15:08 450] listen ip:127.0.0.1,port:6001
+[2016-01-29 23:15:08 453] InsideNet::RecvMsgPack -2
+[2016-01-29 23:15:08 453] UserNet::RecvMsgPack recv msgid=2147483646
+[2016-01-29 23:15:08 453] client login ip=123.57.41.73,port=5001,local_port=17890
+[2016-01-29 23:15:08 476] InsideNet::RecvMsgPack {"m_msgId":2, "m_errorCode":0, "m_seed":14171880, "m_id":9, "m_gateIp":"123.57.41.73", "m_gatePort":8001}
+[2016-01-29 23:15:08 477] UserNet::RecvMsgPack user recv msgid=2
+[2016-01-29 23:15:08 478] Work::HanderServerMsg 14171880:9:123.57.41.73:8001
+[2016-01-29 23:15:08 478] InsideNet::RecvMsgPack -2
+[2016-01-29 23:15:08 478] UserNet::RecvMsgPack recv msgid=2147483646
+[2016-01-29 23:15:08 478] client login ip=123.57.41.73,port=8001,local_port=17891
+[2016-01-29 23:15:08 490] InsideNet::RecvMsgPack {"m_msgId":12, "m_errorCode":0, "m_id":9, "m_nike":"test3", "m_exp":0, "m_sex":0, "m_face":"", "m_provice":"", "m_city":"", "m_ip":"", "m_new":0, "m_card1":1, "m_card2":1, "m_card3":1}
+[2016-01-29 23:15:08 494] UserNet::RecvMsgPack user recv msgid=12
+[2016-01-29 23:15:08 495] InsideNet::RecvMsgPack {"m_msgId":13, "m_card1":0, "m_card2":0, "m_card3":0}
+[2016-01-29 23:15:08 495] UserNet::RecvMsgPack user recv msgid=13
+[2016-01-29 23:15:08 496] InsideNet::RecvMsgPack {"m_msgId":14, "m_str":"hello welcome"}
+[2016-01-29 23:15:08 497] UserNet::RecvMsgPack user recv msgid=14
+[2016-01-29 23:15:08 524] Work::HanderUserLogin 9:test3
+[2016-01-29 23:15:08 526] Work::HanderUserItem 0:0:0
+[2016-01-29 23:15:08 551] InsideNet::RecvMsgPack 23
+[2016-01-29 23:15:08 551] UserNet::RecvMsgPack recv msgid=23
+[2016-01-29 23:15:08 552] InsideNet::RecvMsgPack {"m_msgId":30, "m_deskId":1, "m_pos":3, "m_ready":-858993460, "m_score":-858993460}
+[2016-01-29 23:15:08 553] UserNet::RecvMsgPack user recv msgid=30
+[2016-01-29 23:15:08 554] InsideNet::RecvMsgPack {"m_msgId":31, "m_userId":5, "m_nike":"test", "m_face":"", "m_sex":0, "m_pos":0, "m_ready":1, "m_score":-858993460, "m_ip":"123.57.41.73"}
+[2016-01-29 23:15:08 555] UserNet::RecvMsgPack user recv msgid=31
+[2016-01-29 23:15:08 556] InsideNet::RecvMsgPack {"m_msgId":31, "m_userId":7, "m_nike":"test1", "m_face":"", "m_sex":0, "m_pos":1, "m_ready":1, "m_score":-858993460, "m_ip":"123.57.41.73"}
+[2016-01-29 23:15:08 557] UserNet::RecvMsgPack user recv msgid=31
+[2016-01-29 23:15:08 559] InsideNet::RecvMsgPack {"m_msgId":31, "m_userId":8, "m_nike":"test2", "m_face":"", "m_sex":0, "m_pos":2, "m_ready":1, "m_score":-858993460, "m_ip":"123.57.41.73"}
+[2016-01-29 23:15:08 560] UserNet::RecvMsgPack user recv msgid=31
+[2016-01-29 23:15:08 574] Work::HanderUserAddRoom -842150451:-842150451
+[2016-01-29 23:15:08 574] Work::HanderUserIntoDesk deskid=1 pos=3 ready=0 score=0
+[2016-01-29 23:15:08 574] Work::HanderUserAddDesk userId=5 pos=0 nike=test score=0
+[2016-01-29 23:15:08 575] Work::HanderUserAddDesk userId=7 pos=1 nike=test1 score=0
+[2016-01-29 23:15:08 577] Work::HanderUserAddDesk userId=8 pos=2 nike=test2 score=0
+[2016-01-29 23:15:08 653] InsideNet::RecvMsgPack {"m_msgId":37, "m_pos":3}
+[2016-01-29 23:15:08 653] UserNet::RecvMsgPack user recv msgid=37
+[2016-01-29 23:15:08 662] InsideNet::RecvMsgPack {"m_msgId":50, "array":[{"m_color":1, "m_number":3}, {"m_color":1, "m_number":4}, {"m_color":1, "m_number":5}, {"m_color":1, "m_number":6}, {"m_color":2, "m_number":2}, {"m_color":2, "m_number":2}, {"m_color":2, "m_number":3}, {"m_color":2, "m_number":4}, {"m_color":2, "m_number":4}, {"m_color":2, "m_number":4}, {"m_color":3, "m_number":2}, {"m_color":3, "m_number":5}, {"m_color":3, "m_number":7}], "m_deskCardCount":56, "様様様様様様様様様様様様様様様様様様様
+[2016-01-29 23:15:08 664] UserNet::RecvMsgPack user recv msgid=50
+[2016-01-29 23:15:08 664] InsideNet::RecvMsgPack 51
+[2016-01-29 23:15:08 664] UserNet::RecvMsgPack recv msgid=51
+[2016-02-07 06:51:53 728] listen ip:127.0.0.1,port:6001

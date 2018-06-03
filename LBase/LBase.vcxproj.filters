@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="LIni.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LLog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LNet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LRunnable.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LSingleton.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LSocket.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LTime.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LTool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LUser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LBuff.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LMsg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LMsgS2S.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LCharge.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LVideo.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LTabFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LActive.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MiniDump.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GameDefine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LVipLog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseCommonFunc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LMemoryRecycle.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LDBSession.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SafeResourceLock.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LRedisClient.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RLogHttp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="LLog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LNet.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LRunnable.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LSocket.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LTime.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LTool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LUser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LIni.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LMsg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LCharge.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LVideo.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LTabFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LActive.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniDump.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LVipLog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseCommonFunc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LMemeoryRecycle.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LDBSession.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LRedisClient.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RLogHttp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
