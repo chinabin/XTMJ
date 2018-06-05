@@ -41,6 +41,8 @@ protected:
 	// 计算玩家得分
 	void calcUserScore(Lint result, Lint gold[], Lint& bombCount, Lint winPos[]);
 
+	bool checkOtherPlayCanHu(int pos);
+
 	void SetThinkIng();
 
 	void CheckThink();
@@ -142,8 +144,9 @@ private:
 
 	Lint            m_qiangganghu;
 
-	std::vector<CardValue>	m_ghostCardReal;			//鬼牌
-	Card			m_ghostCardFlop;					//翻出的鬼牌 发送给客户端
+	std::vector<CardValue>	m_ghostCardReal;			//癞子 发送给客户端
+	Card			m_ghostCardFlop;					//癞子前一张
+	bool            m_playGhostCard = false;            //是否有打过癞子
 
 	PengInfoVector m_gangInfo[DESK_USER_COUNT];			// 杠牌，明杠谁的
 	PengInfoVector m_pengInfo[DESK_USER_COUNT];	//碰牌

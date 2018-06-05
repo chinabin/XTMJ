@@ -30,40 +30,24 @@ ThinkVec CH_WuHan_XianTao::CheckOutCardOperator(CardVector& handcard,CardVector&
 
 		if(!gameInfo.bNoCard && CheckCanGang(handcard,outCard))
 		{
-			if(gameInfo.m_tingCard->size() == 0)
+			unit.Clear();
+			unit.m_type = THINK_OPERATOR_MGANG;
+			unit.m_card.push_back(outCard);
+			result.push_back(unit);
+		}
+
+		if(CheckCanPeng(handcard,outCard))
+		{
+			/*if (outCard->m_color == gameInfo.m_hCard[0].m_color)
 			{
-				unit.Clear();
-				unit.m_type = THINK_OPERATOR_MGANG;
-				unit.m_card.push_back(outCard);
-				result.push_back(unit);
-			}
-			else		// 听牌的话需要判断碰后是否影响原来的和牌
-			{
-				CardVector temphand;
-				temphand.reserve(handcard.size()-3);	// 去掉杠的牌后 看能否继续满足听胡的牌
-				for(int i=0; i<handcard.size(); ++i)
+				// 判断是否是小朝天
+				Lint cardNumber = gameInfo.m_hCard[0].m_number - 1;
+				if (cardNumber <= 0)
 				{
-					if(*handcard[i] != *outCard)
-					{
-						temphand.push_back(handcard[i]);
-					}
+					cardNumber = 9;
 				}
 
-				bool huok = true;
-				std::vector<int> hutype;
-				int oldPlayPos = gameInfo.m_playerPos;				// 赖子测试的时候会判断outCard是否是自己的 所以这里临时改为自己
-				gameInfo.m_playerPos = gameInfo.m_MePos;
-				for(int i=0; i<gameInfo.m_tingCard->size(); ++i)
-				{
-					if(!CheckCanHu(temphand, pengCard,agangCard,mgangCard,eatCard,&((*gameInfo.m_tingCard))[i].m_card,gameInfo,hutype))//(!CheckHoo(temphand, &((*gameInfo.m_tingCard))[i].m_card))
-					{
-						huok = false;
-						break;
-					}
-				}
-				gameInfo.m_playerPos = oldPlayPos;
-
-				if(huok)
+				if (outCard->m_number == cardNumber)
 				{
 					unit.Clear();
 					unit.m_type = THINK_OPERATOR_MGANG;
@@ -71,13 +55,13 @@ ThinkVec CH_WuHan_XianTao::CheckOutCardOperator(CardVector& handcard,CardVector&
 					result.push_back(unit);
 				}
 			}
-		}
-		if(gameInfo.m_tingCard->size() == 0 && CheckCanPeng(handcard,outCard))
-		{
-			unit.Clear();
-			unit.m_type = THINK_OPERATOR_PENG;
-			unit.m_card.push_back(outCard);
-			result.push_back(unit);
+			else*/
+			{
+				unit.Clear();
+				unit.m_type = THINK_OPERATOR_PENG;
+				unit.m_card.push_back(outCard);
+				result.push_back(unit);
+			}
 		}
 	}
 
@@ -91,15 +75,12 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 	gameInfo.bChaTing = false;
 	if(gameInfo.b_canHu && CheckCanHu(handcard, pengCard,agangCard,mgangCard,eatCard,getCard,gameInfo,unit.m_hu))
 	{
-		if(!(gameInfo.m_playtype.checkPlayType(PT_ZK_TING) || gameInfo.m_playtype.checkPlayType(PT_BOTTOM_POUR)) || gameInfo.m_tingCard->size()>0)
+		unit.m_type = THINK_OPERATOR_BOMB;
+		if (getCard)
 		{
-			unit.m_type = THINK_OPERATOR_BOMB;
-			if (getCard)
-			{
-				unit.m_card.push_back(getCard);
-			}
-			result.push_back(unit);
+			unit.m_card.push_back(getCard);
 		}
+		result.push_back(unit);
 	}
 
 	if(!gameInfo.b_onlyHu)
@@ -116,64 +97,38 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 		{
 			for(Lsize i = 0 ; i < vec.size(); ++i)
 			{
-// 				if (gameInfo.m_pt_laizi && gameInfo.m_hCard.size() > 0)
-// 				{
-// 					if(*vec[i] != gameInfo.m_hCard[0])//鬼牌不能杠碰
-// 					{
-// 						unit.Clear();
-// 						unit.m_type = THINK_OPERATOR_ABU;
-// 						unit.m_card.push_back(vec[i]);
-// 						result.push_back(unit);
-// 					}
-// 				}
-// 				else
-// 				{
-// 					unit.Clear();
-// 					unit.m_type = THINK_OPERATOR_ABU;
-// 					unit.m_card.push_back(vec[i]);
-// 					result.push_back(unit);
-// 				}
-
-				if(gameInfo.m_pt_laizi && gameInfo.m_hCard.size() > 0 && *vec[i] == gameInfo.m_hCard[0])//鬼牌不能杠碰
+				if(gameInfo.m_pt_laizi && gameInfo.m_hCard.size() > 0 && vec[i]->m_color == gameInfo.m_hCard[0].m_color && vec[i]->m_number == gameInfo.m_hCard[0].m_number)//鬼牌不能杠碰
 					continue;
 
-				if(gameInfo.m_tingCard->size() == 0)
+				// 暗杠的牌只能是当前摸得牌，此时不打就不能再杠了
+				if (getCard && vec[i]->m_color != getCard->m_color && vec[i]->m_number != getCard->m_number)
 				{
 					unit.Clear();
 					unit.m_type = THINK_OPERATOR_AGANG;
 					unit.m_card.push_back(vec[i]);
 					result.push_back(unit);
 				}
-				else		// 听牌的话需要判断碰后是否影响原来的和牌
+			}
+		}
+
+		vec.clear();
+		if (!gameInfo.bNoCard && getCard)
+		{
+			Lint color = gameInfo.m_hCard[0].m_color;
+			Lint number = gameInfo.m_hCard[0].m_number - 1;
+			if (number == 0)
+			{
+				number = 9;
+			}
+
+			if (getCard->m_color == color && getCard->m_number == number)
+			{
+				if (CheckCanPeng(handcard, getCard))
 				{
-					CardVector temphand;
-					temphand.reserve(handcard.size()-3);	// 去掉杠的牌后 看能否继续满足听胡的牌
-					for(int j=0; j<handcard.size(); ++j)
-					{
-						if(*handcard[j] != *vec[i])
-						{
-							temphand.push_back(handcard[j]);
-						}
-					}
-
-					bool huok = true;
-					std::vector<int> hutype;
-					for(int j=0; j<gameInfo.m_tingCard->size(); ++j)
-					{
-						if(!CheckCanHu(temphand, pengCard,agangCard,mgangCard,eatCard,&((*gameInfo.m_tingCard))[j].m_card,gameInfo,hutype))//(!CheckHoo(temphand, &((*gameInfo.m_tingCard))[j].m_card))
-						{
-							huok = false;
-							break;
-						}
-					}
-
-					if(huok)
-					{
-						unit.Clear();
-						unit.m_type = THINK_OPERATOR_AGANG;
-						unit.m_card.push_back(vec[i]);
-						result.push_back(unit);
-					}
+					unit.Clear();
+					unit.m_type = THINK_OPERATOR_AGANG;
+					unit.m_card.push_back(getCard);
+					result.push_back(unit);
 				}
 			}
 		}
@@ -183,66 +138,20 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 		{
 			for(Lsize i = 0 ; i < vec.size(); ++i)
 			{
-// 				if (gameInfo.m_pt_laizi && gameInfo.m_hCard.size() > 0)
-// 				{
-// 					if(*vec[i] != gameInfo.m_hCard[0])//鬼牌不能杠碰
-// 					{
-// 						unit.Clear();
-// 						unit.m_type = THINK_OPERATOR_MGANG;//THINK_OPERATOR_MBU;
-// 						unit.m_card.push_back(vec[i]);
-// 						result.push_back(unit);
-// 					}
-// 				}
-// 				else
-// 				{
-// 					unit.Clear();
-// 					unit.m_type = THINK_OPERATOR_MGANG;//THINK_OPERATOR_MBU;
-// 					unit.m_card.push_back(vec[i]);
-// 					result.push_back(unit);
-// 				}
-
-				if(gameInfo.m_pt_laizi && gameInfo.m_hCard.size() > 0 && *vec[i] == gameInfo.m_hCard[0])//鬼牌不能杠碰
+				if(gameInfo.m_pt_laizi && gameInfo.m_hCard.size() > 0 && vec[i]->m_color == gameInfo.m_hCard[0].m_color && vec[i]->m_number == gameInfo.m_hCard[0].m_number)//鬼牌不能杠碰
 					continue;
 
-				if(gameInfo.m_tingCard->size() == 0)
+				// 明杠只能是当前拿的牌，错过后就不能明杠了
+				if (getCard && vec.size() > 0 && (vec[i]->m_color == getCard->m_color && vec[i]->m_number == getCard->m_number))
 				{
 					unit.Clear();
 					unit.m_type = THINK_OPERATOR_MGANG;
 					unit.m_card.push_back(vec[i]);
 					result.push_back(unit);
 				}
-				else		// 听牌的话需要判断碰后是否影响原来的和牌
-				{
-					CardVector temphand;
-					temphand.reserve(handcard.size()-1);	// 去掉杠的牌后 看能否继续满足听胡的牌
-					for(int j=0; j<handcard.size(); ++j)
-					{
-						if(*handcard[j] != *vec[i])
-						{
-							temphand.push_back(handcard[j]);
-						}
-					}
-
-					bool huok = true;
-					std::vector<int> hutype;
-					for(int j=0; j<gameInfo.m_tingCard->size(); ++j)
-					{
-						if(!CheckCanHu(temphand, pengCard,agangCard,mgangCard,eatCard,&((*gameInfo.m_tingCard))[j].m_card,gameInfo,hutype))//(!CheckHoo(temphand, &((*gameInfo.m_tingCard))[j].m_card))
-						{
-							huok = false;
-							break;
-						}
-					}
-
-					if(huok)
-					{
-						unit.Clear();
-						unit.m_type = THINK_OPERATOR_MGANG;
-						unit.m_card.push_back(vec[i]);
-						result.push_back(unit);
-					}
-				}
+				
 			}
+
 			if(getCard && vec.size() > 0 && (vec.at(0)->m_color != getCard->m_color || vec.at(0)->m_number != getCard->m_number))
 			{
 				gameInfo.m_pGscard = vec.at(0);
@@ -255,9 +164,6 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 bool CH_WuHan_XianTao::CheckCanHu(CardVector& handcard,CardVector& pengCard,CardVector& agangCard,CardVector& mgangCard,CardVector& eatCard, Card* outCard, OperateState& gameInfo,std::vector<Lint>& vec)
 { 
 	vec.clear();
-
-	if(gameInfo.m_playtype.checkPlayType(PT_ZK_DUANMEN))
-		return false;
 
 	// 是否带混的玩法
 	if (gameInfo.m_pt_laizi)
@@ -456,7 +362,7 @@ void CH_WuHan_XianTao::CheckCanHuHun(CardVector& handcard,CardVector& pengCard,C
 			}
 		}
 	}
-	
+
 	if ( CheckHooWithHun(cardnum, hunnum) )	// 33332
 	{
 		if(CheckQiangganghu(gameInfo))

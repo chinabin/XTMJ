@@ -477,17 +477,6 @@ void CardBase::DealCard(CardVector& v1, CardVector& v2, CardVector& v3, CardVect
 		mCards.erase(mCards.begin() + seed1, mCards.begin() + seed1 + 1);
 		nSize = mCards.size();
 	}
-	
-	std::stringstream str;
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 13; j++)
-		{
-			str << cardtmp[i * 10 + j]->GetNCIndex() << " ";
-		}
-		str << "\n";
-	}
-	LLOG_DEBUG("card vector:\n%s", str.str().c_str());
 
 	if(specialCard)
 		SwapCardBySpecial(cardtmp, specialCard, needwind, needzhong, needflower);
@@ -2644,6 +2633,7 @@ TingVec CardBase::CheckGetCardTing( CardVector& handcard, CardVector& pengCard, 
 	LTime precur;
 	// 多线程计算
 	gCounterManager.CalcTing( tmp, pengCard, agangCard, mgangCard, eatCard, gameInfo, this, result );
+	//gCounterManager.CalcTingWithHun(tmp, pengCard, agangCard, mgangCard, eatCard, gameInfo, this, gameInfo.m_hCard,result);
 
 	LTime now;
 	calctime += now.MSecs() - precur.MSecs();

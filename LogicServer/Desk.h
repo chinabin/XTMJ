@@ -79,6 +79,16 @@ struct ThinkTool
 		}
 		return false;
 	}
+
+	bool HasAnGang()
+	{
+		for (Lsize i = 0; i < m_thinkData.size(); ++i)
+		{
+			if (m_thinkData[i].m_type == THINK_OPERATOR_AGANG)
+				return true;
+		}
+		return false;
+	}
 	
 
 	bool NeedThink()
