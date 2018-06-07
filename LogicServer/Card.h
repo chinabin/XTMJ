@@ -307,6 +307,7 @@ struct OperateState
 	PlayType m_playtype;	// 桌子玩法
 	Lint* m_hufan;			// 番数配置表
 	std::vector<Card> m_hCard;  //宜宾 混牌
+	bool b_userPlayCard; //记录玩家是否出过牌
 
 	// Add HuNanZhuanZhuan by hanlu 02242017 Begin
 	CardVector		m_gangcard;		//过手杠
@@ -339,6 +340,7 @@ struct OperateState
 		//Add HuNanZhuanZhuan by hanlu 02242017 End
 		m_bCiPaiDispatched(false), m_CiPai(NULL), m_is10deskcardLeft(false),m_showCount(0),m_tingCard(NULL)
 	{
+		b_userPlayCard = false;
 	}
 	void Clear()
 	{
@@ -364,6 +366,7 @@ struct OperateState
 		m_playtype.clear();
 		m_hufan = NULL;
 		m_hCard.clear();
+		b_userPlayCard = false;
 
 		// Add HuNanZhuanZhuan by hanlu 02242017 Begin
 		m_CiPai			= NULL;

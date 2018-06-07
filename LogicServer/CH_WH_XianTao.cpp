@@ -100,9 +100,11 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 				if(gameInfo.m_pt_laizi && gameInfo.m_hCard.size() > 0 && vec[i]->m_color == gameInfo.m_hCard[0].m_color && vec[i]->m_number == gameInfo.m_hCard[0].m_number)//鬼牌不能杠碰
 					continue;
 
+				LLOG_DEBUG("userPlayCard=%d,card=%d,%d.", gameInfo.b_userPlayCard, vec[i]->m_color, vec[i]->m_number);
 				// 暗杠的牌只能是当前摸得牌，此时不打就不能再杠了
-				if (getCard && vec[i]->m_color != getCard->m_color && vec[i]->m_number != getCard->m_number)
+				if (getCard && ((!gameInfo.b_userPlayCard) || (vec[i]->m_color == getCard->m_color && vec[i]->m_number == getCard->m_number)))
 				{
+					LLOG_DEBUG("angang");
 					unit.Clear();
 					unit.m_type = THINK_OPERATOR_AGANG;
 					unit.m_card.push_back(vec[i]);
@@ -120,11 +122,12 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 			{
 				number = 9;
 			}
-
+			LLOG_DEBUG("check dachaotian, ghostFlop=%d,%d;getcard:%d,%d.", color, number, getCard->m_color, getCard->m_number);
 			if (getCard->m_color == color && getCard->m_number == number)
 			{
 				if (CheckCanPeng(handcard, getCard))
 				{
+					LLOG_DEBUG("dachaotian");
 					unit.Clear();
 					unit.m_type = THINK_OPERATOR_AGANG;
 					unit.m_card.push_back(getCard);

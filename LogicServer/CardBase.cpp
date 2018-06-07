@@ -988,6 +988,7 @@ bool CardBase::CheckAnGang(CardVector& handcard, CardVector& vec)
 	int cardnum[4][9] = {0};
 	for ( CardVector::iterator it = handcard.begin(); it != handcard.end(); ++it )
 	{
+		
 		if ( !(*it) )
 		{
 			continue;
@@ -1000,6 +1001,7 @@ bool CardBase::CheckAnGang(CardVector& handcard, CardVector& vec)
 		{
 			continue;
 		}
+
 		cardnum[(*it)->m_color-1][(*it)->m_number-1]++;
 		if ( cardnum[(*it)->m_color-1][(*it)->m_number-1] >= 4 )
 		{

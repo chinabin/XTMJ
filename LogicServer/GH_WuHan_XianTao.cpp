@@ -56,6 +56,7 @@ void GH_WuHan_XianTao::shutdown(void)
 		m_resultMingGangScore[i] = 0;
 		m_resultADianGangScore[i] = 0;
 		m_scoreInfo[i].clear();
+		b_userPlayCard[i] = false;
 	}
 	m_desk = NULL;
 	m_curOutCard = NULL;
@@ -129,6 +130,7 @@ void GH_WuHan_XianTao::SetDeskPlay()
 		m_resultMingGangScore[i] = 0;
 		m_resultADianGangScore[i] = 0;
 		m_scoreInfo[i].clear();
+		b_userPlayCard[i] = false;
 	}
 	if(!m_pt_pao || m_changeZhuang)
 	{
@@ -438,7 +440,7 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 	}
 
 	LLOG_DEBUG("WUHAN_XIANTAO::HanderUserPlayCard id:%d pos:%d think_type:%d", pUser->m_userData.m_id, pos, msg->m_thinkInfo.m_type);
-
+	
 	if(msg->m_thinkInfo.m_type == THINK_OPERATOR_OUT)
 	{
 		if(msg->m_thinkInfo.m_card.size())
@@ -452,7 +454,8 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 					m_desk->BoadCast(sendMsg);
 					m_beforePos = pos;
 					m_beforeType = THINK_OPERATOR_OUT;
-
+					b_userPlayCard[pos] = true;
+					LLOG_DEBUG("broadcast message, curPos=%d.", pos);
 					//录像
 					std::vector<CardValue> cards;
 					CardValue card;
@@ -1349,9 +1352,9 @@ void GH_WuHan_XianTao::DeakCard()
 		InitHunCard();
 
 	//庄家多发一张牌
-	Card* newCard = m_deskCard.back();
-	m_handCard[m_curPos].push_back(newCard);
-	m_deskCard.pop_back();
+	//Card* newCard = m_deskCard.back();
+	//m_handCard[m_curPos].push_back(newCard);
+	//m_deskCard.pop_back();
 	gCB_WuHan_XianTao->SortCard(m_handCard[m_curPos]);
 	m_cardPos1 = L_Rand(0, 3);
 	m_cardPos2 = L_Rand(2, 12);
@@ -1431,7 +1434,7 @@ void GH_WuHan_XianTao::DeakCard()
 void GH_WuHan_XianTao::CheckStartPlayCard()
 {
 	m_desk->setDeskPlayState(DESK_PLAY_GET_CARD);
-	SetPlayIng(m_curPos,false, false, true, true);
+	SetPlayIng(m_curPos,true, false, true, true);
 	m_curGetCard = m_handCard[m_curPos].back();
 	m_needGetCard = true;
 }
@@ -1477,11 +1480,16 @@ void GH_WuHan_XianTao::SetPlayIng(Lint pos,bool needGetCard,bool gang, bool need
 		cards.push_back(card);
 		m_video.AddOper(VIDEO_OPER_GET_CARD, pos, cards);
 	}
+	LLOG_DEBUG("needGetCard:%d, needThink:%d.", needGetCard, needThink);
 	if (needThink)
 	{
 		m_gameInfo.m_pGscard = NULL;
 		m_gameInfo.b_canHu = canhu;		// 是否可以胡
-		m_gameInfo.b_onlyHu = m_gangPos[pos];
+		m_gameInfo.b_onlyHu = false;
+		if (m_deskCard.size() <= DESK_USER_COUNT)
+		{
+			m_gameInfo.b_onlyHu = true;
+		}
 		m_gameInfo.m_thinkGang = false;	// 单独处理是不是杠的牌
 		m_gameInfo.m_deskState = m_desk->getDeskPlayState();	// 当前局牌状态
 		m_gameInfo.m_playerPos = m_curPos;	// 当前一个出牌位置
@@ -1491,6 +1499,7 @@ void GH_WuHan_XianTao::SetPlayIng(Lint pos,bool needGetCard,bool gang, bool need
 		m_gameInfo.bNoCard = isDeskCardEmpty();//m_deskCard.empty();
 		//m_gameInfo.m_playtype = m_playtype;
 		m_gameInfo.m_tingCard = &m_tingCard[pos];
+		m_gameInfo.b_userPlayCard = b_userPlayCard[pos];
 
 		m_thinkInfo[pos].m_thinkData = gCB_WuHan_XianTao->CheckGetCardOperator(m_handCard[pos],m_pengCard[pos],m_abombCard[pos],m_gangCard[pos],m_eatCard[pos],m_curGetCard,m_gameInfo);
 		// 记录过手杠
@@ -1626,6 +1635,10 @@ void GH_WuHan_XianTao::SetThinkIng()
 		{
 			m_gameInfo.b_canHu = checkOtherPlayCanHu(i); // 是否可以胡
 			m_gameInfo.b_onlyHu = false;
+			if (m_deskCard.size() <= DESK_USER_COUNT)
+			{
+				m_gameInfo.b_onlyHu = true;
+			}
 			m_gameInfo.m_thinkGang = false;	// 单独处理是不是杠的牌
 			m_gameInfo.m_deskState = m_desk->getDeskPlayState();	// 当前局牌状态
 			m_gameInfo.m_playerPos = m_curPos;	// 当前一个出牌位置
@@ -1634,6 +1647,7 @@ void GH_WuHan_XianTao::SetThinkIng()
 			m_gameInfo.m_MePos = i;		// 玩家的位置
 			m_gameInfo.bNoCard = isDeskCardEmpty();//m_deskCard.empty();
 			m_gameInfo.m_tingCard = &m_tingCard[i];
+			m_gameInfo.b_userPlayCard = b_userPlayCard[i];
 
 			m_thinkInfo[i].m_thinkData = gCB_WuHan_XianTao->CheckOutCardOperator(m_handCard[i],m_pengCard[i],m_abombCard[i],m_gangCard[i],m_eatCard[i],m_curOutCard,m_gameInfo);
 			if (m_thinkInfo[i].NeedThink())
@@ -2415,10 +2429,9 @@ Lint GH_WuHan_XianTao::FindPengGangPos(Lint curPos, CardValue card)
 
 bool GH_WuHan_XianTao::isDeskCardEmpty()
 {
-	int gangCount = 0;
-	for(Lint i = 0; i < DESK_USER_COUNT; ++i)
+	if (m_deskCard.size() == 0)
 	{
-		gangCount += (m_abombCard[i].size() + m_gangCard[i].size())/4;
+		return true;
 	}
-	return m_deskCard.size() <= 13 - gangCount;		// 实际上是14 - 1 - gangCount 桌上保留14张 减去的一张是赖子 剩下13张
+	return false;
 }
