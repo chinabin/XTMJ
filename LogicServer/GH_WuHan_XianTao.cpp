@@ -453,7 +453,7 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 					gCB_WuHan_XianTao->EraseCard(m_handCard[pos], m_curOutCard);
 					m_desk->BoadCast(sendMsg);
 					m_beforePos = pos;
-					m_beforeType = THINK_OPERATOR_OUT;
+					
 					b_userPlayCard[pos] = true;
 					LLOG_DEBUG("broadcast message, curPos=%d.", pos);
 					//录像
@@ -470,6 +470,8 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 					}
 					//这里玩家思考
 					SetThinkIng();
+					// 这里设置了之后会导致当前用户杠了之后，打的那张牌不能强制胡
+					//m_beforeType = THINK_OPERATOR_OUT;
 					break;
 				}
 			}
@@ -481,6 +483,7 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 	ThinkUnit* unit = NULL;
 	for(Lsize i = 0 ; i < m_thinkInfo[pos].m_thinkData.size(); ++i)
 	{
+		LLOG_DEBUG("msg thinkType=%d，data type=%d，i=%d.", msg->m_thinkInfo.m_type, m_thinkInfo[pos].m_thinkData[i].m_type, i);
 		if(msg->m_thinkInfo.m_type == m_thinkInfo[pos].m_thinkData[i].m_type)
 		{
 			if(msg->m_thinkInfo.m_card.size() == m_thinkInfo[pos].m_thinkData[i].m_card.size())
@@ -488,9 +491,11 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 				bool find = true;
 				for(Lsize j = 0 ; j < msg->m_thinkInfo.m_card.size() ; ++j)
 				{
+					LLOG_DEBUG("msg card=%d.%d, data card=%d.%d.", msg->m_thinkInfo.m_card[j].m_color, msg->m_thinkInfo.m_card[j].m_number, m_thinkInfo[pos].m_thinkData[i].m_card[j]->m_color, m_thinkInfo[pos].m_thinkData[i].m_card[j]->m_number);
 					if(msg->m_thinkInfo.m_card[j].m_color != m_thinkInfo[pos].m_thinkData[i].m_card[j]->m_color ||
 						msg->m_thinkInfo.m_card[j].m_number != m_thinkInfo[pos].m_thinkData[i].m_card[j]->m_number)
 					{
+						LLOG_DEBUG("find=false, i=%d.", i);
 						find = false;
 						break;
 					}
@@ -652,6 +657,7 @@ void GH_WuHan_XianTao::HanderUserOperCard(User* pUser,LMsgC2SUserOper* msg)
 
 	LLOG_DEBUG("gCB_WuHan_XianTao::HanderUserOperCard id:%d pos:%d think_type:%d", pUser->m_userData.m_id, pos, msg->m_think.m_type);
 
+	printThinkInfo(m_thinkInfo[pos]);
 	bool find = false;
 	for(Lsize i = 0 ; i < m_thinkInfo[pos].m_thinkData.size(); ++i)
 	{
@@ -739,11 +745,27 @@ void GH_WuHan_XianTao::HanderUserOperCard(User* pUser,LMsgC2SUserOper* msg)
 			}
 		}
 	}
-	else if (msg->m_think.m_type == THINK_OPERATOR_PENG ||
-		msg->m_think.m_type == THINK_OPERATOR_AGANG ||
+	else if (msg->m_think.m_type == THINK_OPERATOR_MBU ||
 		msg->m_think.m_type == THINK_OPERATOR_MGANG )
 	{
 		m_guoShouHu[pos] = false;
+		bool isQiangGangHu = false;
+		for (Lint m = 0; m < DESK_USER_COUNT; m++)
+		{
+			LLOG_DEBUG("==================");
+
+			if (m_thinkInfo[m].HasHu() || m_guoShouHu[m])
+			{
+				m_thinkRet[m].m_type = THINK_OPERATOR_BOMB;
+				isQiangGangHu = true;
+			}
+		}
+
+		if (isQiangGangHu)
+		{
+			ThinkEnd();
+			return;
+		}
 	}
 
 	//设置以及思考过了
@@ -1627,6 +1649,8 @@ void GH_WuHan_XianTao::SetThinkIng()
 		return;
 	}
 	bool think = false;
+	Lint canHuNumber = 0;
+
 	for(Lint i = 0 ; i < DESK_USER_COUNT;++i)
 	{
 		m_thinkRet[i].Clear();
@@ -1654,11 +1678,38 @@ void GH_WuHan_XianTao::SetThinkIng()
 			{
 				think = true;
 				VideoThink(i);
+				
+				printThinkInfo(m_thinkInfo[i]);
+				ThinkVec thinkVec = m_thinkInfo[i].m_thinkData;
+				for (ThinkUnit thinkUnit : thinkVec)
+				{
+					if (thinkUnit.m_type == THINK_OPERATOR_BOMB)
+					{
+						m_thinkRet[i].m_type = THINK_OPERATOR_BOMB;
+						canHuNumber++;
+					}
+				}
 			}
 		}
 	}
 
-	if (think)
+	// 当canHuNumber=1时，且上一次的结果为明杠和补杠时，直接胡牌
+	LLOG_DEBUG("canHuNumber=%d, m_beforeType=%d, m_beforePos=%d.", canHuNumber, m_beforeType, m_beforePos);
+	if (canHuNumber == 1 && (m_beforeType == THINK_OPERATOR_AGANG || m_beforeType == THINK_OPERATOR_MGANG))
+	{
+		ThinkEnd();
+		return;
+	}
+
+	if (canHuNumber < 2)
+	{
+		for (Lint i = 0; i < DESK_USER_COUNT; ++i)
+		{
+			m_thinkRet[i].Clear();
+		}
+	}
+
+	if (think && canHuNumber < 2)
 	{
 		m_desk->setDeskPlayState(DESK_PLAY_THINK_CARD);
 		for (Lint i = 0; i < DESK_USER_COUNT; ++i)
@@ -1734,6 +1785,8 @@ void GH_WuHan_XianTao::CheckThink()
 		}
 	}
 
+	LLOG_DEBUG("hu=%d,peng=%d,gang=%d,angang=%d,bu=%d.", hu, Peng, Gang, anGang, Bu);
+	LLOG_DEBUG("hu_new=%d,peng_new=%d,gang_new=%d,angang_new=%d,bu_new=%d.", hu_New, Peng_New, Gang_New, anGang_New, Bu_New);
 	bool think = false;
 
 	if (hu_New)	
@@ -1756,6 +1809,7 @@ void GH_WuHan_XianTao::ThinkEnd()
 	for(int i = 0; i < DESK_USER_COUNT; ++i)
 	{
 		m_thinkInfo[i].Reset();
+		m_guoShouHu[i] = false;
 	}
 	Lint huCount = 0;
 
@@ -1768,7 +1822,7 @@ void GH_WuHan_XianTao::ThinkEnd()
 	{
 		if (m_thinkRet[i].m_type == THINK_OPERATOR_BOMB)
 		{
-			m_playerHuInfo[i].type = CheckIfBigHu(m_thinkRet[i].m_hu)? WIN_SUB_DBOMB : WIN_SUB_BOMB;
+			m_playerHuInfo[i].type = WIN_SUB_BOMB;
 			m_playerHuInfo[i].abombpos = m_beforePos;
 			huCount++;
 		}

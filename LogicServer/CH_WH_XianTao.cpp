@@ -12,6 +12,15 @@ ThinkVec CH_WuHan_XianTao::CheckOutCardOperator(CardVector& handcard,CardVector&
 	ThinkVec result;
 	ThinkUnit unit;
 	gameInfo.bChaTing = false;
+	LLOG_DEBUG("b_canhu=%d, outCard=%d:%d.", gameInfo.b_canHu, outCard->m_color, outCard->m_number);
+	std::stringstream str;
+	for (Lint j = 0; j< handcard.size(); ++j)
+	{
+		str << handcard[j]->GetNCIndex() << " ";
+	}
+	str << ".";
+	LLOG_DEBUG("handcard=%s.", str.str().c_str());
+
 	if(gameInfo.b_canHu && CheckCanHu(handcard,pengCard,agangCard,mgangCard,eatCard, outCard,gameInfo,unit.m_hu))
 	{
 		unit.m_type = THINK_OPERATOR_BOMB;
@@ -177,7 +186,12 @@ bool CH_WuHan_XianTao::CheckCanHu(CardVector& handcard,CardVector& pengCard,Card
 	{
 		CheckCanHuNormal( handcard, pengCard, agangCard, mgangCard, eatCard, outCard, gameInfo, vec );
 	}
-
+	LLOG_DEBUG("check can hu size: %d.", vec.size());
+	for (int ret : vec)
+	{
+		LLOG_DEBUG("ret=%d.", ret);
+	}
+	LLOG_DEBUG("======");
 	return vec.size()!=0;
 }
 
@@ -370,8 +384,7 @@ void CH_WuHan_XianTao::CheckCanHuHun(CardVector& handcard,CardVector& pengCard,C
 	{
 		if(CheckQiangganghu(gameInfo))
 		{
-			if(gameInfo.m_playtype.GametypeQiangKang())
-				vec.push_back(HU_QIANGGANGHU);
+			vec.push_back(HU_QIANGGANGHU);
 		}
 		else
 		{

@@ -90,6 +90,14 @@ struct ThinkUnit
 		m_score = 0;
 	}
 
+	void toString()
+	{
+		for (Card* card : m_card)
+		{
+			LLOG_DEBUG("m_type=%d, card=%d,%d.", m_type, card->m_color, card->m_number);
+		}
+	}
+
 	void Clear()
 	{
 		m_type = THINK_OPERATOR_NULL;

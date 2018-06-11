@@ -82,6 +82,15 @@ protected:
 	}
 
 	bool isDeskCardEmpty();		// 判断桌上是否还有牌 由于规则原因 不能直接判断 m_deskCard.empty()
+
+	void printThinkInfo(ThinkTool thinkInfo)
+	{
+		ThinkVec thinkData = thinkInfo.m_thinkData;
+		for (ThinkUnit thinkUnit : thinkData)
+		{
+			thinkUnit.toString();
+		}
+	}
 private:
 	Card*			m_louHuCard[DESK_USER_COUNT];		//是否有漏胡记录 *
 
