@@ -110,8 +110,19 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 					continue;
 
 				LLOG_DEBUG("userPlayCard=%d,card=%d,%d.", gameInfo.b_userPlayCard, vec[i]->m_color, vec[i]->m_number);
-				// 暗杠的牌只能是当前摸得牌，此时不打就不能再杠了
-				if (getCard && ((!gameInfo.b_userPlayCard) || (vec[i]->m_color == getCard->m_color && vec[i]->m_number == getCard->m_number)))
+				
+				// 如果用户没有打过牌，则直接可以暗杠
+				if (!gameInfo.b_userPlayCard)
+				{
+					LLOG_DEBUG("angang");
+					unit.Clear();
+					unit.m_type = THINK_OPERATOR_AGANG;
+					unit.m_card.push_back(vec[i]);
+					result.push_back(unit);
+				}
+
+				// 如果已经打过牌，则暗杠的牌只能是当前摸得牌，此时不打就不能再杠了
+				if (getCard && (vec[i]->m_color == getCard->m_color && vec[i]->m_number == getCard->m_number))
 				{
 					LLOG_DEBUG("angang");
 					unit.Clear();
@@ -156,8 +167,26 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 				// 明杠只能是当前拿的牌，错过后就不能明杠了
 				if (getCard && vec.size() > 0 && (vec[i]->m_color == getCard->m_color && vec[i]->m_number == getCard->m_number))
 				{
+					bool isBuGang = false;
+					for (Card* card : pengCard)
+					{
+						if (card->m_color == vec[i]->m_color && card->m_number == vec[i]->m_number)
+						{
+							isBuGang = true;
+							break;
+						}
+					}
+
 					unit.Clear();
-					unit.m_type = THINK_OPERATOR_MGANG;
+					if (isBuGang)
+					{
+						unit.m_type = THINK_OPERATOR_MBU;
+					}
+					else
+					{
+						unit.m_type = THINK_OPERATOR_MGANG;
+					}
+					
 					unit.m_card.push_back(vec[i]);
 					result.push_back(unit);
 				}
@@ -186,12 +215,12 @@ bool CH_WuHan_XianTao::CheckCanHu(CardVector& handcard,CardVector& pengCard,Card
 	{
 		CheckCanHuNormal( handcard, pengCard, agangCard, mgangCard, eatCard, outCard, gameInfo, vec );
 	}
-	LLOG_DEBUG("check can hu size: %d.", vec.size());
+	/*LLOG_DEBUG("check can hu size: %d.", vec.size());
 	for (int ret : vec)
 	{
 		LLOG_DEBUG("ret=%d.", ret);
 	}
-	LLOG_DEBUG("======");
+	LLOG_DEBUG("======");*/
 	return vec.size()!=0;
 }
 

@@ -571,33 +571,19 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 		{
 			//录相;
 			VideoDoing(unit->m_type,pos,unit->m_card[0]->m_color,unit->m_card[0]->m_number);
-			//
+
+			LLOG_DEBUG("m_curOutCard=%d,%d.", m_curOutCard->m_color, m_curOutCard->m_number);
 			m_curOutCard = unit->m_card[0];
-			gCB_WuHan_XianTao->EraseCard(m_handCard[pos], unit->m_card[0],1);	
+			LLOG_DEBUG("m_curOutCard=%d,%d.", m_curOutCard->m_color, m_curOutCard->m_number);
+			gCB_WuHan_XianTao->EraseCard(m_handCard[pos], unit->m_card[0],3);	
+			m_desk->BoadCast(sendMsg);
+			m_minggang[pos] += 1;
 
 			//这里玩家思考
 			m_beforePos = pos;
 			m_beforeType = THINK_OPERATOR_MGANG;
-			SetThinkIng();
-		}
-		else if(unit->m_type == THINK_OPERATOR_ABU)
-		{
-			//录相;
-			VideoDoing(unit->m_type,pos,unit->m_card[0]->m_color,unit->m_card[0]->m_number);
-			//
-			gCardMgr->EraseCard(m_handCard[pos], unit->m_card[0],4);	
-			m_desk->BoadCast(sendMsg);
-			m_angang[pos] += 1;
-			//录像
-			std::vector<CardValue> cards(4, unit->m_card[0]->ToCardValue());
-			m_video.AddOper(VIDEO_OPER_AN_BU, pos, cards);
-
-			m_abombCard[pos].insert(m_abombCard[pos].end(), 4, unit->m_card[0]);
-
-			//这里玩家思考
-			m_beforePos = pos;
-			m_beforeType = THINK_OPERATOR_ABU;
-			SetPlayIng(pos,true, false, true, true);
+			//SetThinkIng();
+			SetPlayIng(pos, true, true, true, true);
 		}
 		else if(unit->m_type == THINK_OPERATOR_MBU)
 		{
@@ -606,12 +592,14 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 			//
 			m_curOutCard = unit->m_card[0];
 			gCB_WuHan_XianTao->EraseCard(m_handCard[pos], unit->m_card[0],1);
-			//m_desk->BoadCast(sendMsg);	
+			m_desk->BoadCast(sendMsg);	
+			m_minggang[pos] += 1;
 
 			//这里玩家思考
 			m_beforePos = pos;
 			m_beforeType = THINK_OPERATOR_MBU;
-			SetThinkIng();
+			SetPlayIng(pos, true, true, true, true);
+			
 		}
 		//我们的thinkinfo中不会有THINK_OPERATOR_NULL，所以不会有unit，不会走到这一步
 		// 			else if(unit->m_type == THINK_OPERATOR_NULL)
@@ -748,6 +736,11 @@ void GH_WuHan_XianTao::HanderUserOperCard(User* pUser,LMsgC2SUserOper* msg)
 	else if (msg->m_think.m_type == THINK_OPERATOR_MBU ||
 		msg->m_think.m_type == THINK_OPERATOR_MGANG )
 	{
+		m_beforeType = THINK_OPERATOR_MGANG;
+		if (msg->m_think.m_type == THINK_OPERATOR_MBU)
+		{
+			m_beforeType = THINK_OPERATOR_MBU;
+		}
 		m_guoShouHu[pos] = false;
 		bool isQiangGangHu = false;
 		for (Lint m = 0; m < DESK_USER_COUNT; m++)
@@ -1434,6 +1427,7 @@ void GH_WuHan_XianTao::DeakCard()
 		}
 	}
 
+	//SetPlaying();
 	//录像功能
 	Lint id[4];
 	Lint score[4];
@@ -1512,7 +1506,7 @@ void GH_WuHan_XianTao::SetPlayIng(Lint pos,bool needGetCard,bool gang, bool need
 		{
 			m_gameInfo.b_onlyHu = true;
 		}
-		m_gameInfo.m_thinkGang = false;	// 单独处理是不是杠的牌
+		m_gameInfo.m_thinkGang = gang;	// 单独处理是不是杠的牌
 		m_gameInfo.m_deskState = m_desk->getDeskPlayState();	// 当前局牌状态
 		m_gameInfo.m_playerPos = m_curPos;	// 当前一个出牌位置
 		m_gameInfo.m_cardState = THINK_OPERATOR_NULL;	// 当前一个出牌状态
@@ -1695,7 +1689,7 @@ void GH_WuHan_XianTao::SetThinkIng()
 
 	// 当canHuNumber=1时，且上一次的结果为明杠和补杠时，直接胡牌
 	LLOG_DEBUG("canHuNumber=%d, m_beforeType=%d, m_beforePos=%d.", canHuNumber, m_beforeType, m_beforePos);
-	if (canHuNumber == 1 && (m_beforeType == THINK_OPERATOR_AGANG || m_beforeType == THINK_OPERATOR_MGANG))
+	if (canHuNumber == 1 && (m_beforeType == THINK_OPERATOR_AGANG || m_beforeType == THINK_OPERATOR_MGANG || m_beforeType == THINK_OPERATOR_MBU))
 	{
 		ThinkEnd();
 		return;
@@ -1859,6 +1853,32 @@ void GH_WuHan_XianTao::ThinkEnd()
 						curOutCard.m_number = m_thinkRet[i].m_card[n]->m_number;
 						m_playerHuInfo[i].wincards.push_back(curOutCard);
 					}
+					/*
+					LMsgS2CUserOper send;
+					send.m_pos = i;
+					send.m_errorCode = 0;
+					ThinkData tmpThinkData;
+					tmpThinkData.m_type = THINK_OPERATOR_BOMB;
+					std::vector<CardValue> tmpCardVector;
+					CardValue curOutCard;
+					curOutCard.m_color = m_curOutCard->m_color;
+					curOutCard.m_number = m_curOutCard->m_number;
+					tmpCardVector.push_back(curOutCard);
+					tmpThinkData.m_card = tmpCardVector;
+					send.m_think = tmpThinkData;
+					send.m_card.m_color = (m_curOutCard == NULL) ? 1 : m_curOutCard->m_color;		//临时的 有错误
+					send.m_card.m_number = (m_curOutCard == NULL) ? 1 : m_curOutCard->m_number;		//临时的 有错误
+					//send.m_hu = m_thinkRet[i].m_hu;
+					send.m_cardCount = m_handCard[i].size();
+					for (Lint i = 0; i < send.m_cardCount; ++i)
+					{
+						CardValue mCard;
+						mCard.m_color = m_handCard[i][i]->m_color;
+						mCard.m_number = m_handCard[i][i]->m_number;
+						send.m_cardValue.push_back(mCard);
+					}
+					m_desk->BoadCast(send);
+					*/
 					m_video.AddOper(VIDEO_OPER_SHOUPAO, i, m_playerHuInfo[i].wincards);
 				}
 			}
@@ -1884,7 +1904,7 @@ void GH_WuHan_XianTao::ThinkEnd()
 	}
 
 	//杠
-	if (gangPos != INVAILD_POS || anGangPos != INVAILD_POS)
+	if (gangPos != INVAILD_POS)
 	{
 		LMsgS2CUserOper send;
 		send.m_pos = gangPos;
@@ -1931,6 +1951,57 @@ void GH_WuHan_XianTao::ThinkEnd()
 		}
 		//给玩家摸一张牌
 		SetPlayIng(gangPos, true, true, true, true);
+		return;
+	}
+
+	//杠
+	if (anGangPos != INVAILD_POS)
+	{
+		LMsgS2CUserOper send;
+		send.m_pos = anGangPos;
+		send.m_errorCode = 0;
+		send.m_beforePos = m_beforePos;
+		send.m_think.m_type = m_thinkRet[anGangPos].m_type;
+		for (Lsize i = 0; i < m_thinkRet[anGangPos].m_card.size(); ++i)
+		{
+			CardValue v;
+			v.m_color = m_thinkRet[anGangPos].m_card[i]->m_color;
+			v.m_number = m_thinkRet[anGangPos].m_card[i]->m_number;
+			send.m_think.m_card.push_back(v);
+		}
+		send.m_card.m_color = m_curOutCard->m_color;
+		send.m_card.m_number = m_curOutCard->m_number;
+		m_desk->BoadCast(send);
+		gCB_WuHan_XianTao->EraseCard(m_handCard[anGangPos], m_thinkRet[anGangPos].m_card[0], 4);
+
+		//录像
+		std::vector<CardValue> cards;
+		for (int i = 0; i < 4; ++i)
+		{
+			CardValue card;
+			card.m_color = m_curOutCard->m_color;
+			card.m_number = m_curOutCard->m_number;
+			cards.push_back(card);
+			m_gangCard[anGangPos].push_back(m_curOutCard);
+		}
+		m_video.AddOper(VIDEO_OPER_GANG, anGangPos, cards);
+
+		m_diangang[anGangPos] += 1;
+		m_adiangang[m_beforePos] += 1;
+		m_mingGangInfo[anGangPos].push_back(m_beforePos);
+
+		PengInfo pengInfo;
+		pengInfo.card.m_color = m_curOutCard->m_color;
+		pengInfo.card.m_number = m_curOutCard->m_number;
+		pengInfo.pos = m_beforePos;
+		m_gangInfo[anGangPos].push_back(pengInfo);
+
+		for (int i = 0; i < DESK_USER_COUNT; ++i)
+		{
+			m_thinkRet[i].Clear();
+		}
+		//给玩家摸一张牌
+		SetPlayIng(anGangPos, true, true, true, true);
 		return;
 	}
 
@@ -2033,83 +2104,26 @@ void GH_WuHan_XianTao::ThinkEnd()
 		}
 		//碰完打一张牌
 		m_curGetCard = NULL;
-		SetPlayIng(pengPos, false, false, false, false);
+		SetPlayIng(pengPos, false, false, true, false);
 		m_needGetCard = true;
 		return;
 	}
 	LLOG_DEBUG("m_beforePos=%d,m_beforeType=%d.", m_beforePos, m_beforeType);
+	
 	//这里没有人操作 自己明杠 其他玩家没有抢杠胡的 就会走到这儿
-	if (m_beforeType == THINK_OPERATOR_MGANG || m_beforeType == THINK_OPERATOR_MBU)
+	if (m_curOutCard != NULL)
 	{
-		//录像
-		std::vector<CardValue> cards(4, m_curOutCard->ToCardValue());
-
-		if (m_beforeType == THINK_OPERATOR_MGANG)
-		{
-			m_video.AddOper(VIDEO_OPER_MING_GANG, m_beforePos, cards);
-		}
-		else
-		{
-			m_video.AddOper(VIDEO_OPER_SELF_BU, m_beforePos, cards);
-		}
-
-		m_gangCard[m_beforePos].push_back(m_curOutCard);
-		CardVector::iterator it = m_pengCard[m_beforePos].begin();
-		for(; it != m_pengCard[m_beforePos].end();it+=3)
-		{
-			if(gCB_WuHan_XianTao->IsSame(m_curOutCard,*it))
-			{
-				m_gangCard[m_beforePos].insert(m_gangCard[m_beforePos].end(),it,it+3);
-				m_pengCard[m_beforePos].erase(it,it+3);
-				break;
-			}
-		}
-		//这里处理 明杠 明补发消息
-		LMsgS2CUserPlay sendMsg;
-		sendMsg.m_errorCode = 0;
-		sendMsg.m_pos = m_beforePos;
-		sendMsg.m_card.m_type = m_beforeType;
-		CardValue card;
-		card.m_color = m_curOutCard->m_color;
-		card.m_number = m_curOutCard->m_number;
-		sendMsg.m_card.m_card.push_back(card);
-
-		Lint pengGangPos = FindPengGangPos(m_beforePos, card);
-
-		sendMsg.m_beforePos = pengGangPos;
-
-		m_desk->BoadCast(sendMsg);
-
-		//m_minggang[m_beforePos] += 1;
-		//Lint pengGangPos = FindPengGangPos(m_beforePos, card);
-		if ((pengGangPos >= 0) && (pengGangPos < DESK_USER_COUNT))
-		{
-			m_pengGangInfo[m_beforePos].push_back(pengGangPos);
-		}
-
-		PengInfo pengInfo;
-		pengInfo.card.m_color = m_curOutCard->m_color;
-		pengInfo.card.m_number = m_curOutCard->m_number;
-		pengInfo.pos = pengGangPos;
-		m_gangInfo[m_beforePos].push_back(pengInfo);
-
-		SetPlayIng(m_beforePos,true,m_beforeType == THINK_OPERATOR_MGANG, true, true);
+		m_outCard[m_beforePos].push_back(m_curOutCard);
+	}
+	LLOG_DEBUG("m_curOutCard:%d,%d;m_ghostCardFlop=%d,%d.", m_curOutCard->m_color, m_curOutCard->m_number, m_ghostCardReal[0].m_color, m_ghostCardReal[0].m_number);
+	if (m_curOutCard->m_color == m_ghostCardReal[0].m_color && m_curOutCard->m_number == m_ghostCardReal[0].m_number)
+	{
+		SetPlayIng(m_beforePos, true, false, true, true);
 	}
 	else
 	{
-		if (m_curOutCard != NULL)
-		{
-			m_outCard[m_beforePos].push_back(m_curOutCard);
-		}
-		LLOG_DEBUG("m_curOutCard:%d,%d;m_ghostCardFlop=%d,%d.", m_curOutCard->m_color, m_curOutCard->m_number, m_ghostCardReal[0].m_color, m_ghostCardReal[0].m_number);
-		if (m_curOutCard->m_color == m_ghostCardReal[0].m_color && m_curOutCard->m_number == m_ghostCardReal[0].m_number)
-		{
-			SetPlayIng(m_beforePos, true, false, true, true);
-		}
-		else
-		{
-			SetPlayIng(m_desk->GetNextPos(m_beforePos), true, false, true, true);
-		}
+		m_beforeType = THINK_OPERATOR_OUT;
+		SetPlayIng(m_desk->GetNextPos(m_beforePos), true, false, true, true);
 	}
 }
 

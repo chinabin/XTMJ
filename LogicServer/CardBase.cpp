@@ -988,7 +988,6 @@ bool CardBase::CheckAnGang(CardVector& handcard, CardVector& vec)
 	int cardnum[4][9] = {0};
 	for ( CardVector::iterator it = handcard.begin(); it != handcard.end(); ++it )
 	{
-		
 		if ( !(*it) )
 		{
 			continue;

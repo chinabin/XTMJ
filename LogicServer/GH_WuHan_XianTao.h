@@ -128,6 +128,9 @@ private:
 	Lint            m_isPiao[DESK_USER_COUNT];//四家跑数
 	bool            m_isFly[DESK_USER_COUNT];//已下跑的玩家
 
+	Lint            m_curPlayScore[DESK_USER_COUNT]; // 当前打牌的分数
+	Lint            m_totalScore[DESK_USER_COUNT]; // 总分
+
 	Desk			*m_desk;
 
 	Card*			m_curOutCard;//当前出出来的牌
