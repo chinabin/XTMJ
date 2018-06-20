@@ -1853,7 +1853,7 @@ void GH_WuHan_XianTao::ThinkEnd()
 						curOutCard.m_number = m_thinkRet[i].m_card[n]->m_number;
 						m_playerHuInfo[i].wincards.push_back(curOutCard);
 					}
-					/*
+					LLOG_DEBUG("Begin to send msg.");
 					LMsgS2CUserOper send;
 					send.m_pos = i;
 					send.m_errorCode = 0;
@@ -1870,15 +1870,15 @@ void GH_WuHan_XianTao::ThinkEnd()
 					send.m_card.m_number = (m_curOutCard == NULL) ? 1 : m_curOutCard->m_number;		//临时的 有错误
 					//send.m_hu = m_thinkRet[i].m_hu;
 					send.m_cardCount = m_handCard[i].size();
-					for (Lint i = 0; i < send.m_cardCount; ++i)
+					for (Lint j = 0; j < send.m_cardCount; ++j)
 					{
 						CardValue mCard;
-						mCard.m_color = m_handCard[i][i]->m_color;
-						mCard.m_number = m_handCard[i][i]->m_number;
+						mCard.m_color = m_handCard[i][j]->m_color;
+						mCard.m_number = m_handCard[i][j]->m_number;
 						send.m_cardValue.push_back(mCard);
 					}
 					m_desk->BoadCast(send);
-					*/
+					
 					m_video.AddOper(VIDEO_OPER_SHOUPAO, i, m_playerHuInfo[i].wincards);
 				}
 			}
@@ -1895,6 +1895,30 @@ void GH_WuHan_XianTao::ThinkEnd()
 					curOutCard.m_color = m_curOutCard->m_color;
 					curOutCard.m_number = m_curOutCard->m_number;
 					m_playerHuInfo[i].wincards.push_back(curOutCard);
+
+					LLOG_DEBUG("Begin to send msg.");
+					LMsgS2CUserOper send;
+					send.m_pos = i;
+					send.m_errorCode = 0;
+					ThinkData tmpThinkData;
+					tmpThinkData.m_type = THINK_OPERATOR_BOMB;
+					std::vector<CardValue> tmpCardVector;
+					tmpCardVector.push_back(curOutCard);
+					tmpThinkData.m_card = tmpCardVector;
+					send.m_think = tmpThinkData;
+					send.m_card.m_color = (m_curOutCard == NULL) ? 1 : m_curOutCard->m_color;		//临时的 有错误
+					send.m_card.m_number = (m_curOutCard == NULL) ? 1 : m_curOutCard->m_number;		//临时的 有错误
+																									//send.m_hu = m_thinkRet[i].m_hu;
+					send.m_cardCount = m_handCard[i].size();
+					for (Lint j = 0; j < send.m_cardCount; ++j)
+					{
+						CardValue mCard;
+						mCard.m_color = m_handCard[i][j]->m_color;
+						mCard.m_number = m_handCard[i][j]->m_number;
+						send.m_cardValue.push_back(mCard);
+					}
+					m_desk->BoadCast(send);
+
 					m_video.AddOper(VIDEO_OPER_SHOUPAO, i, m_playerHuInfo[i].wincards);
 				}
 			}
