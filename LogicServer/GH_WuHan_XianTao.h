@@ -118,6 +118,7 @@ private:
 	Lint			m_minggang[DESK_USER_COUNT];//明扛数量 包括點槓和碰槓
 	Lint			m_diangang[DESK_USER_COUNT];//明杠数量 别人点的
 	Lint			m_adiangang[DESK_USER_COUNT];//点别人杠数量
+	Lint			m_baseScore[DESK_USER_COUNT];//每个玩家的倍数
 
 	Lint			m_gangPos[DESK_USER_COUNT];	//某位玩家有过杠
 

@@ -734,6 +734,28 @@ Lint RoomVip::CreateVipDesk(LMsgLMG2LCreateDesk* pMsg, User* pUser)
 		return ret.m_errorCode;*/
 	}
 
+	Lint baseScore = 1;
+	std::vector<Lint> tmpPlayType = pMsg->m_playType;
+	for (Lint x = 0; x < tmpPlayType.size(); x++)
+	{
+		if (400 == tmpPlayType[x])
+		{
+			baseScore = 1;
+			break;
+		}
+		else if (401 == tmpPlayType[x])
+		{
+			baseScore = 2;
+			break;
+		}
+		else if (402 == tmpPlayType[x])
+		{
+			baseScore = 4;
+			break;
+		}
+	}
+
+
  	Lint circle = 0;
 	if(pMsg->m_flag <= CARD_TYPE_NONE || pMsg->m_flag >= CARD_TYPE_MAX)
 		pMsg->m_flag = CARD_TYPE_DEFAULT;

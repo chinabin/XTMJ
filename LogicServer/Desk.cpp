@@ -78,6 +78,7 @@ bool Desk::initDesk(int iDeskId, GameType gameType, Lint cardType)
 	m_id = iDeskId;
 	m_gameType = gameType;
 	m_cardType = cardType;
+	m_baseScore = 1;
 
 	LTime cur;
 	m_timeDeskCreate = cur.Secs();

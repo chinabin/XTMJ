@@ -119,6 +119,7 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 					unit.m_type = THINK_OPERATOR_AGANG;
 					unit.m_card.push_back(vec[i]);
 					result.push_back(unit);
+					continue;
 				}
 
 				// 如果已经打过牌，则暗杠的牌只能是当前摸得牌，此时不打就不能再杠了
