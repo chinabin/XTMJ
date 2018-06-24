@@ -588,6 +588,21 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 		}
 		else if(unit->m_type == THINK_OPERATOR_AGANG)
 		{
+			int score = 0;
+			for (int i = 0; i < DESK_USER_COUNT; ++i)
+			{
+				if (i == m_curPos)
+				{
+					continue;
+				}
+
+				int tmpScore = 2 * m_desk->m_baseScore * m_baseScore[i] * m_baseScore[m_curPos];
+				sendMsg.m_addScore[i] = -tmpScore;
+				score += tmpScore;
+			}
+
+			sendMsg.m_addScore[m_curPos] = score;
+
 			//录相;
 			VideoDoing(unit->m_type,pos,unit->m_card[0]->m_color,unit->m_card[0]->m_number);
 			//
@@ -606,6 +621,10 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 		}
 		else if(unit->m_type == THINK_OPERATOR_MGANG)
 		{
+			int score = 2 * m_desk->m_baseScore * m_baseScore[m_curPos] * m_baseScore[m_beforePos];
+			sendMsg.m_addScore[m_curPos] = score;
+			sendMsg.m_addScore[m_beforePos] = -score;
+
 			//录相;
 			VideoDoing(unit->m_type,pos,unit->m_card[0]->m_color,unit->m_card[0]->m_number);
 
@@ -624,6 +643,21 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 		}
 		else if(unit->m_type == THINK_OPERATOR_MBU)
 		{
+			int score = 0;
+			for (int i = 0; i < DESK_USER_COUNT; ++i)
+			{
+				if (i == m_curPos)
+				{
+					continue;
+				}
+
+				int tmpScore = m_desk->m_baseScore * m_baseScore[i] * m_baseScore[m_curPos];
+				sendMsg.m_addScore[i] = -tmpScore;
+				score += tmpScore;
+			}
+
+			sendMsg.m_addScore[m_curPos] = score;
+
 			//录相;
 			VideoDoing(unit->m_type,pos,unit->m_card[0]->m_color,unit->m_card[0]->m_number);
 			//
@@ -678,7 +712,11 @@ void GH_WuHan_XianTao::HanderUserOperCard(User* pUser,LMsgC2SUserOper* msg)
 		return;
 	}
 
-	m_curPos = pos;
+	// 操作结果是取消时，不调整curPos的位置，避免发牌错位
+	if (msg->m_think.m_type != THINK_OPERATOR_NULL)
+	{
+		m_curPos = pos;
+	}
 	sendMsg.m_pos = m_curPos;
 	LLOG_DEBUG("HanderUserOperCard, beforePos=%d, curPos=%d, opType=%d.", m_beforePos, m_curPos, msg->m_think.m_type);
 	LLOG_DEBUG("gCB_WuHan_XianTao::HanderUserOperCard id:%d pos:%d think_type:%d", pUser->m_userData.m_id, pos, msg->m_think.m_type);

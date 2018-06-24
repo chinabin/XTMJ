@@ -2185,6 +2185,7 @@ struct LMsgS2CUserPlay:public LMsgSC
 	Lint		m_cardCount;			//手牌数量
 	std::vector<CardValue> m_cardValue;	//推倒的手牌
 	CardValue m_huCard;					//自摸胡的那张牌
+	std::vector<Lint>        m_addScore;          //当前牌局积分
 	
 	LMsgS2CUserPlay() :LMsgSC(MSG_S_2_C_PLAY_CARD)
 	{
@@ -2193,6 +2194,10 @@ struct LMsgS2CUserPlay:public LMsgSC
 //		m_qiangGangflag=2;
 		m_pos = INVAILD_POS;
 		m_cardCount = 0;
+		m_addScore.push_back(0);
+		m_addScore.push_back(0);
+		m_addScore.push_back(0);
+		m_addScore.push_back(0);
 	}
 
 	virtual bool Read(msgpack::object& obj)
@@ -2210,7 +2215,7 @@ struct LMsgS2CUserPlay:public LMsgSC
 
 	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
 	{
-		WriteMap(pack, 11);
+		WriteMap(pack, 12);
 		WriteKeyValue(pack, NAME_TO_STR(m_msgId), m_msgId);
 		WriteKeyValue(pack, NAME_TO_STR(m_errorCode), m_errorCode);
 		WriteKeyValue(pack, NAME_TO_STR(m_type), m_card.m_type);
@@ -2221,6 +2226,9 @@ struct LMsgS2CUserPlay:public LMsgSC
 		WriteKeyValue(pack, NAME_TO_STR(m_cardCount), m_cardCount);
 		WriteKeyValue(pack, NAME_TO_STR(m_cardValue), m_cardValue);
 		m_huCard.Write(pack);
+		WriteKeyValue(pack, NAME_TO_STR(m_addScore), m_addScore);
+
+		LLOG_DEBUG("scoreInfo=%d,%d,%d,%d.", m_addScore[0], m_addScore[1], m_addScore[2], m_addScore[3]);
 		return true;
 	}
 
@@ -2515,13 +2523,18 @@ struct LMsgS2CUserOper:public LMsgSC
 	Lint        m_hType;                //1代表抢杠胡，否则为其他
 	Lint		m_cardCount;			//手牌数量
 	std::vector<CardValue> m_cardValue;	//推倒的手牌
-		
+	std::vector<Lint>        m_addScore;          //当前牌局积分
+	
 	LMsgS2CUserOper() :LMsgSC(MSG_S_2_C_USER_OPER)
 	{
 		m_errorCode = -1;
 		m_pos = INVAILD_POS;
 		m_hType = 0;
 		m_cardCount = 0;
+		m_addScore.push_back(0);
+		m_addScore.push_back(0);
+		m_addScore.push_back(0);
+		m_addScore.push_back(0);
 	}
 
 	virtual bool Read(msgpack::object& obj)
@@ -2535,12 +2548,14 @@ struct LMsgS2CUserOper:public LMsgSC
 		ReadMapData(obj, NAME_TO_STR(m_hType), m_hType);
 		ReadMapData(obj, NAME_TO_STR(m_cardCount), m_cardCount);
 		ReadMapData(obj, NAME_TO_STR(m_cardValue), m_cardValue);
+		ReadMapData(obj, NAME_TO_STR(m_addScore), m_addScore);
+		
 		return true;
 	}
 
 	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
 	{
-		WriteMap(pack, 11);
+		WriteMap(pack, 12);
 		WriteKeyValue(pack, NAME_TO_STR(m_msgId), m_msgId);
 		WriteKeyValue(pack, NAME_TO_STR(m_errorCode), m_errorCode);
 		WriteKeyValue(pack, NAME_TO_STR(m_pos), m_pos);
@@ -2550,7 +2565,9 @@ struct LMsgS2CUserOper:public LMsgSC
 		WriteKeyValue(pack, NAME_TO_STR(m_hu), m_hu);
 		WriteKeyValue(pack, NAME_TO_STR(m_hType), m_hType);
 		WriteKeyValue(pack, NAME_TO_STR(m_cardCount), m_cardCount);
+		WriteKeyValue(pack, NAME_TO_STR(m_addScore), m_addScore);
 		WriteKeyValue(pack, NAME_TO_STR(m_cardValue), m_cardValue);
+		LLOG_DEBUG("scoreInfo=%d,%d,%d,%d.", m_addScore[0], m_addScore[1], m_addScore[2], m_addScore[3]);
 		return true;
 	}
 

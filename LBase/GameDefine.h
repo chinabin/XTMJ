@@ -8,7 +8,7 @@
 //#define UNCHECKHEARTBEAT
 #endif
 
-#define CARD_COUNT		144		//136
+#define CARD_COUNT		108		//136
 #define INIT_CARD_NUM 	8		// 新手房卡数量
 
 //排行榜
@@ -33,7 +33,7 @@ enum THINK_OPERATOR
 	THINK_OPERATOR_NULL  = 0, 
 	THINK_OPERATOR_OUT   = 1,
 	THINK_OPERATOR_BOMB  = 2, // 胡
-	THINK_OPERATOR_AGANG = 3, // 暗杠	目前没用到
+	THINK_OPERATOR_AGANG = 3, // 暗杠
 	THINK_OPERATOR_MGANG = 4, // 明杠
 	THINK_OPERATOR_PENG  = 5, // 碰
 	THINK_OPERATOR_CHI   = 6, // 吃     目前没用到
