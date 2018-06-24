@@ -454,6 +454,29 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 				{
 					m_curOutCard = m_handCard[pos][i];
 					gCB_WuHan_XianTao->EraseCard(m_handCard[pos], m_curOutCard);
+
+					if (m_curOutCard->m_color == m_ghostCardReal[0].m_color && m_curOutCard->m_number == m_ghostCardReal[0].m_number)
+					{
+						m_playGhostCard = true;
+						
+						// 飘癞子倍数翻倍
+						m_baseScore[m_curPos] = m_baseScore[m_curPos] * 2;
+
+						int score = 0;
+						for (int x = 0; x < DESK_USER_COUNT; x++)
+						{
+							if (m_curPos == x)
+							{
+								continue;
+							}
+							int tmpScore = m_desk->m_baseScore * m_baseScore[x] * m_baseScore[m_curPos];
+							sendMsg.m_addScore[x] = -tmpScore;
+							score += tmpScore;
+						}
+
+						sendMsg.m_addScore[m_curPos] = score;
+					}
+
 					m_desk->BoadCast(sendMsg);
 					//m_beforePos = pos;
 					
@@ -467,10 +490,6 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 					cards.push_back(card);
 					m_video.AddOper(VIDEO_OPER_OUT_CARD, pos, cards);
 
-					if (m_curOutCard->m_color == m_ghostCardReal[0].m_color && m_curOutCard->m_number == m_ghostCardReal[0].m_number)
-					{
-						m_playGhostCard = true;
-					}
 					//这里玩家思考
 					SetThinkIng();
 					// 这里设置了之后会导致当前用户杠了之后，打的那张牌不能强制胡
@@ -535,6 +554,21 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 				mCard.m_number = m_handCard[pos][i]->m_number;
 				sendMsg.m_cardValue.push_back(mCard);
 			}
+
+			int score = 0;
+			for (int i = 0; i < DESK_USER_COUNT; ++i)
+			{
+				if (i == m_curPos)
+				{
+					continue;
+				}
+				
+				int tmpScore = 2 * m_desk->m_baseScore*m_baseScore[i] * m_baseScore[m_curPos];
+				sendMsg.m_addScore[i] = -tmpScore;
+				score += tmpScore;
+			}
+
+			sendMsg.m_addScore[m_curPos] = score;
 			m_desk->BoadCast(sendMsg);
 
 			m_thinkRet[m_curPos] = m_thinkInfo[m_curPos].m_thinkData[0];
@@ -633,9 +667,8 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 void GH_WuHan_XianTao::HanderUserOperCard(User* pUser,LMsgC2SUserOper* msg)
 {
 	LMsgS2CUserOper sendMsg;
-	sendMsg.m_pos = m_curPos;
 	sendMsg.m_think = msg->m_think;
-	LLOG_DEBUG("HanderUserOperCard, beforePos=%d, curPos=%d, opType=%d.", m_beforePos, m_curPos, msg->m_think.m_type);
+	sendMsg.m_pos = m_curPos;
 	Lint pos = m_desk->GetUserPos(pUser);
 	if (pos == INVAILD_POS || !m_thinkInfo[pos].NeedThink())
 	{
@@ -645,6 +678,9 @@ void GH_WuHan_XianTao::HanderUserOperCard(User* pUser,LMsgC2SUserOper* msg)
 		return;
 	}
 
+	m_curPos = pos;
+	sendMsg.m_pos = m_curPos;
+	LLOG_DEBUG("HanderUserOperCard, beforePos=%d, curPos=%d, opType=%d.", m_beforePos, m_curPos, msg->m_think.m_type);
 	LLOG_DEBUG("gCB_WuHan_XianTao::HanderUserOperCard id:%d pos:%d think_type:%d", pUser->m_userData.m_id, pos, msg->m_think.m_type);
 
 	printThinkInfo(m_thinkInfo[pos]);
@@ -1630,6 +1666,7 @@ void GH_WuHan_XianTao::calcUserScore(Lint result, Lint gold[], Lint& bombCount, 
 
 bool GH_WuHan_XianTao::checkOtherPlayCanHu(int pos)
 {
+	LLOG_ERROR("m_playGhostCard=%d, ghostCard=%d,%d.", m_playGhostCard, m_ghostCardReal[0].m_color, m_ghostCardReal[0].m_number);
 	if (m_playGhostCard)
 	{
 		return false;
@@ -1717,6 +1754,7 @@ void GH_WuHan_XianTao::SetThinkIng()
 
 	if (think && canHuNumber < 2)
 	{
+		m_beforePos = m_curPos;
 		m_desk->setDeskPlayState(DESK_PLAY_THINK_CARD);
 		for (Lint i = 0; i < DESK_USER_COUNT; ++i)
 		{
@@ -1950,8 +1988,8 @@ void GH_WuHan_XianTao::ThinkEnd()
 		send.m_errorCode = 0;
 		send.m_beforePos = m_beforePos;
 
-		//分数=当前出牌人倍数*打牌人倍数*底分
-		int score = m_desk->m_baseScore*m_baseScore[m_curPos] * m_baseScore[m_beforePos];
+		//明杠底分不翻倍，只是分数翻倍
+		int score = 2*m_desk->m_baseScore*m_baseScore[m_curPos] * m_baseScore[m_beforePos];
 		send.m_addScore[m_curPos] = score;
 		send.m_addScore[m_beforePos] = -score;
 
@@ -2017,20 +2055,11 @@ void GH_WuHan_XianTao::ThinkEnd()
 		}
 		send.m_card.m_color = m_curOutCard->m_color;
 		send.m_card.m_number = m_curOutCard->m_number;
-		m_desk->BoadCast(send);
-		gCB_WuHan_XianTao->EraseCard(m_handCard[anGangPos], m_thinkRet[anGangPos].m_card[0], 4);
-
+		
+		//只有打癞子倍数翻倍，其他最多扣分翻倍
 		int score = 0;
-		//录像
-		std::vector<CardValue> cards;
 		for (int i = 0; i < 4; ++i)
 		{
-			CardValue card;
-			card.m_color = m_curOutCard->m_color;
-			card.m_number = m_curOutCard->m_number;
-			cards.push_back(card);
-			m_gangCard[anGangPos].push_back(m_curOutCard);
-
 			if (i == m_curPos)
 			{
 				continue;
@@ -2042,6 +2071,19 @@ void GH_WuHan_XianTao::ThinkEnd()
 		}
 
 		send.m_addScore[m_curPos] = score;
+		m_desk->BoadCast(send);
+		gCB_WuHan_XianTao->EraseCard(m_handCard[anGangPos], m_thinkRet[anGangPos].m_card[0], 4);
+
+		//录像
+		std::vector<CardValue> cards;
+		for (int i = 0; i < 4; ++i)
+		{
+			CardValue card;
+			card.m_color = m_curOutCard->m_color;
+			card.m_number = m_curOutCard->m_number;
+			cards.push_back(card);
+			m_gangCard[anGangPos].push_back(m_curOutCard);
+		}
 
 		m_video.AddOper(VIDEO_OPER_GANG, anGangPos, cards);
 
@@ -2081,6 +2123,21 @@ void GH_WuHan_XianTao::ThinkEnd()
 		}
 		send.m_card.m_color = m_curOutCard->m_color;
 		send.m_card.m_number = m_curOutCard->m_number;
+
+		int score = 0;
+		for (int i = 0; i < 4; ++i)
+		{
+			if (i == m_curPos)
+			{
+				continue;
+			}
+			//补杠所有人都扣分，但是不翻倍
+			int tmpScore = m_desk->m_baseScore*m_baseScore[i] * m_baseScore[m_curPos];
+			send.m_addScore[i] = -tmpScore;
+			score += tmpScore;
+		}
+
+		send.m_addScore[m_curPos] = score;
 		m_desk->BoadCast(send);
 		gCB_WuHan_XianTao->EraseCard(m_handCard[buPos], m_thinkRet[buPos].m_card[0],3);
 

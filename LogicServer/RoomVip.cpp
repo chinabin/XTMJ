@@ -786,6 +786,7 @@ Lint RoomVip::CreateVipDesk(LMsgLMG2LCreateDesk* pMsg, User* pUser)
 		pUser->Send(ret);
 		return ret.m_errorCode;
 	}
+	desk->m_baseScore = baseScore;
 	LLOG_INFO("RoomVip::CreateVipDesk userid=%d deskid=%d gametype=%d", pUser->GetUserDataId(), pMsg->m_deskID, pMsg->m_state);
 	//////////////////////////////////////////////////////////////////////////
 	VipLogItem* log = gVipLogMgr.GetNewLogItem(circle, pUser->GetUserDataId());
