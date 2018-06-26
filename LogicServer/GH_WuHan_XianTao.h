@@ -129,15 +129,14 @@ private:
 	Lint            m_isPiao[DESK_USER_COUNT];//四家跑数
 	bool            m_isFly[DESK_USER_COUNT];//已下跑的玩家
 
-	Lint            m_curPlayScore[DESK_USER_COUNT]; // 当前打牌的分数
-	Lint            m_totalScore[DESK_USER_COUNT]; // 总分
-
 	Desk			*m_desk;
 
 	Card*			m_curOutCard;//当前出出来的牌
 	Card*			m_curGetCard;//当前获取的牌
 	Lint			m_beforePos;   //之前操作的位置
 	THINK_OPERATOR	m_beforeType;  //之前操作的类型
+	Lint            m_beforeOpScore[DESK_USER_COUNT];
+	Lint            m_totalScore[DESK_USER_COUNT]; // 总分
 
 	Lint			m_paoZhuangPos;	//带跑玩法中 除了连庄以外 需要轮流坐庄
 	Lint			m_zhuangpos;   //庄家位置
