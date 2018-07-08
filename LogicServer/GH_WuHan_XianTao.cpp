@@ -465,7 +465,7 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 						m_playGhostCard = true;
 						
 						int score = 0;
-						for (int x = 0; x < DESK_USER_COUNT; x++)
+						for (int x = 0; x < m_desk->GetPlayerCapacity(); x++)
 						{
 							m_beforeOpScore[x] = 0;
 
@@ -599,8 +599,13 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 				doubleSize = 4;
 			}
 
+			if (hasFourLaizi(m_curPos))
+			{
+				doubleSize = 2 * doubleSize;
+			}
+
 			int score = 0;
-			for (int i = 0; i < DESK_USER_COUNT; ++i)
+			for (int i = 0; i < m_desk->GetPlayerCapacity(); ++i)
 			{
 				if (i == m_curPos)
 				{
@@ -635,7 +640,7 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 		else if(unit->m_type == THINK_OPERATOR_AGANG)
 		{
 			int score = 0;
-			for (int i = 0; i < DESK_USER_COUNT; ++i)
+			for (int i = 0; i < m_desk->GetPlayerCapacity(); ++i)
 			{
 				if (i == m_curPos)
 				{
@@ -839,13 +844,13 @@ void GH_WuHan_XianTao::HanderUserOperCard(User* pUser,LMsgC2SUserOper* msg)
 		m_desk->BoadCast(send);
 		*/
 		// 清除其他玩家的碰杠数据 其他玩家只能胡和过
-		for(Lint i = 0; i < DESK_USER_COUNT; ++i)
+		for (Lint i = 0; i < DESK_USER_COUNT; ++i)
 		{
-			if ( i != pos )
+			if (i != pos)
 			{
-				for(auto itThinkData = m_thinkInfo[i].m_thinkData.begin(); itThinkData != m_thinkInfo[i].m_thinkData.end();)
+				for (auto itThinkData = m_thinkInfo[i].m_thinkData.begin(); itThinkData != m_thinkInfo[i].m_thinkData.end();)
 				{
-					if(itThinkData->m_type != THINK_OPERATOR_BOMB)
+					if (itThinkData->m_type != THINK_OPERATOR_BOMB)
 					{
 						itThinkData = m_thinkInfo[i].m_thinkData.erase(itThinkData);
 					}
@@ -861,16 +866,16 @@ void GH_WuHan_XianTao::HanderUserOperCard(User* pUser,LMsgC2SUserOper* msg)
 	// 过手胡
 	if (msg->m_think.m_type == THINK_OPERATOR_NULL)
 	{
-		for(Lsize i = 0 ; i < m_thinkInfo[pos].m_thinkData.size(); ++i)
+		for (Lsize i = 0; i < m_thinkInfo[pos].m_thinkData.size(); ++i)
 		{
-			if(m_thinkInfo[pos].m_thinkData[i].m_type == THINK_OPERATOR_BOMB)
+			if (m_thinkInfo[pos].m_thinkData[i].m_type == THINK_OPERATOR_BOMB)
 			{
 				m_guoShouHu[pos] = true;
 			}
 		}
 	}
 	else if (msg->m_think.m_type == THINK_OPERATOR_MBU ||
-		msg->m_think.m_type == THINK_OPERATOR_MGANG )
+		msg->m_think.m_type == THINK_OPERATOR_MGANG)
 	{
 		m_beforeType = THINK_OPERATOR_MGANG;
 		if (msg->m_think.m_type == THINK_OPERATOR_MBU)
@@ -936,6 +941,10 @@ void GH_WuHan_XianTao::OnUserReconnect(User* pUser)
 
 	for (Lint i = 0; i < DESK_USER_COUNT; ++i)
 	{
+		if (m_desk->m_user[i] == NULL)
+		{
+			continue;
+		}
 		m_desk->m_user[i]->Send(BottomPourInfo);
 	}
 
@@ -1228,7 +1237,7 @@ void GH_WuHan_XianTao::OnGameOver(Lint result,Lint bombpos)
 	Lint mgang[4] = {0};
 	//计算分数
 	
-	for (Lint i = 0; i < DESK_USER_COUNT; i++)
+	for (Lint i = 0; i < m_desk->GetPlayerCapacity(); i++)
 	{
 		gold[i] = m_totalScore[i];
 	}
@@ -1465,8 +1474,11 @@ void GH_WuHan_XianTao::OnGameOver(Lint result,Lint bombpos)
 
 		for(int i=0; i<4; ++i)
 		{
-			task.m_userId[i] = m_desk->m_user[i]->m_userData.m_id;
-			task.m_hu[i] = over.m_win[i];
+			if (m_desk->m_user[i] != NULL)
+			{
+				task.m_userId[i] = m_desk->m_user[i]->m_userData.m_id;
+				task.m_hu[i] = over.m_win[i];
+			}
 		}
 
 		gWork.SendMsgToDb(task);
@@ -1495,7 +1507,14 @@ void GH_WuHan_XianTao::DeakCard()
 // 	}
 	
 	Card* special = gConfig.GetDebugModel() && m_desk->m_specialCard[0].isValid() ? m_desk->m_specialCard : nullptr;
-	gCB_WuHan_XianTao->DealCard(m_handCard[0],m_handCard[1],m_handCard[2],m_handCard[3],m_deskCard, special, m_pt_feng);
+	if (DESK_USER_COUNT == m_desk->GetPlayerCapacity())
+	{
+		gCB_WuHan_XianTao->DealCard(m_handCard[0], m_handCard[1], m_handCard[2], m_handCard[3], m_deskCard, special, m_pt_feng);
+	}
+	else
+	{
+		gCB_WuHan_XianTao->DealCardThree(m_handCard[0], m_handCard[1], m_handCard[2], m_handCard[3], m_deskCard, special, m_pt_feng);
+	}
 
 	std::stringstream str;
 	for(Lint i=0; i<DESK_USER_COUNT; ++i)
@@ -1521,12 +1540,21 @@ void GH_WuHan_XianTao::DeakCard()
 	//m_handCard[m_curPos].push_back(newCard);
 	//m_deskCard.pop_back();
 	gCB_WuHan_XianTao->SortCard(m_handCard[m_curPos]);
-	m_cardPos1 = L_Rand(0, 3);
-	m_cardPos2 = L_Rand(2, 12);
+	if (m_desk->GetPlayerCapacity() != DESK_USER_COUNT)
+	{
+		m_cardPos1 = L_Rand(0, 2);
+		m_zhuangpos = L_Rand(0, 2);
+	}
+	else
+	{
+		m_cardPos1 = L_Rand(0, 3);
+		m_zhuangpos = L_Rand(0, 3);
+	}
+	m_cardPos2 = L_Rand(1, 6);
 	m_cardPos3 = L_Rand(1, 6);
 
 	//发送消息给客户端
-	for(Lint i = 0 ; i < DESK_USER_COUNT; ++i)
+	for(Lint i = 0 ; i < m_desk->GetPlayerCapacity(); ++i)
 	{
 		if(m_desk->m_user[i] != NULL)
 		{
@@ -1582,8 +1610,13 @@ void GH_WuHan_XianTao::DeakCard()
 	Lint id[4];
 	Lint score[4];
 	std::vector<CardValue> vec[4];
-	for (Lint i = 0; i < DESK_USER_COUNT; ++i)
+	for (Lint i = 0; i < m_desk->GetPlayerCapacity(); ++i)
 	{
+		if (m_desk->m_user[i] == NULL)
+		{
+			LLOG_ERROR("user is null, i = %d.", i);
+			continue;
+		}
 		id[i] = m_desk->m_user[i]->GetUserDataId();
 		score[i] = m_desk->m_vip->GetUserScore(m_desk->m_user[i]);
 		for (Lsize j = 0; j < m_handCard[i].size(); ++j)
@@ -1809,7 +1842,7 @@ void GH_WuHan_XianTao::SetThinkIng()
 		{
 			m_gameInfo.b_canHu = checkOtherPlayCanHu(i); // 是否可以胡
 			m_gameInfo.b_onlyHu = false;
-			if (m_deskCard.size() <= DESK_USER_COUNT)
+			if (m_deskCard.size() <= m_desk->GetPlayerCapacity())
 			{
 				m_gameInfo.b_onlyHu = true;
 			}
@@ -1894,7 +1927,10 @@ void GH_WuHan_XianTao::SetThinkIng()
 			{
 				think.m_flag = 0;
 			}
-			m_desk->m_user[i]->Send(think);
+			if (m_desk->m_user[i] != NULL)
+			{
+				m_desk->m_user[i]->Send(think);
+			}
 		}
 	}
 	else
@@ -2067,7 +2103,15 @@ void GH_WuHan_XianTao::ThinkEnd()
 					if (tmpCurPos == m)
 					{
 						hasFound = true;
-						int tmpScore = 2 * m_desk->m_baseScore * m_baseScore[tmpCurPos] * m_baseScore[m_beforePos];
+						int tmpScore = 0;
+						if (hasFourLaizi(tmpCurPos))
+						{
+							tmpScore = 4 * m_desk->m_baseScore * m_baseScore[tmpCurPos] * m_baseScore[m_beforePos];
+						}
+						else
+						{
+							tmpScore = 2 * m_desk->m_baseScore * m_baseScore[tmpCurPos] * m_baseScore[m_beforePos];
+						}
 						huScore[tmpCurPos] = m_beforeOpScore[m_beforePos] + tmpScore - m_beforeOpScore[tmpCurPos];
 						huScore[m_beforePos] = huScore[m_beforePos] - tmpScore - m_beforeOpScore[m_beforePos];
 					}
@@ -2113,7 +2157,7 @@ void GH_WuHan_XianTao::ThinkEnd()
 				m_desk->BroadcastWithoutUser(send, i);
 			}
 
-			for (int j = 0; j < DESK_USER_COUNT; j++)
+			for (int j = 0; j < m_desk->GetPlayerCapacity(); j++)
 			{
 				m_totalScore[j] += huScore[j];
 			}
@@ -2122,7 +2166,7 @@ void GH_WuHan_XianTao::ThinkEnd()
 		}
 		else
 		{
-			for (int i = 0; i < DESK_USER_COUNT; ++i)
+			for (int i = 0; i < m_desk->GetPlayerCapacity(); ++i)
 			{
 				if (m_thinkRet[i].m_type == THINK_OPERATOR_BOMB)
 				{
@@ -2155,11 +2199,19 @@ void GH_WuHan_XianTao::ThinkEnd()
 						send.m_cardValue.push_back(mCard);
 					}
 
-					int score = 2 * m_desk->m_baseScore * m_baseScore[m_curPos] * m_baseScore[m_beforePos];
-					send.m_addScore[m_curPos] = score;
+					int score = 0;
+					if (hasFourLaizi(i))
+					{
+						score = 4 * m_desk->m_baseScore * m_baseScore[i] * m_baseScore[m_beforePos];
+					}
+					else
+					{
+						score = 2 * m_desk->m_baseScore * m_baseScore[i] * m_baseScore[m_beforePos];
+					}
+					send.m_addScore[i] = score;
 					send.m_addScore[m_beforePos] = -score;
 
-					m_totalScore[m_curPos] += score;
+					m_totalScore[i] += score;
 					m_totalScore[m_beforePos] += -score;
 
 					m_desk->BoadCast(send);
@@ -2257,7 +2309,7 @@ void GH_WuHan_XianTao::ThinkEnd()
 		
 		//只有打癞子倍数翻倍，其他最多扣分翻倍
 		int score = 0;
-		for (int i = 0; i < 4; ++i)
+		for (int i = 0; i < m_desk->GetPlayerCapacity(); ++i)
 		{
 			if (i == m_curPos)
 			{
@@ -2331,7 +2383,7 @@ void GH_WuHan_XianTao::ThinkEnd()
 		send.m_card.m_number = m_curOutCard->m_number;
 
 		int score = 0;
-		for (int i = 0; i < 4; ++i)
+		for (int i = 0; i < m_desk->GetPlayerCapacity(); ++i)
 		{
 			if (i == m_curPos)
 			{
@@ -2845,4 +2897,27 @@ bool GH_WuHan_XianTao::isDeskCardEmpty()
 		return true;
 	}
 	return false;
+}
+
+bool GH_WuHan_XianTao::hasFourLaizi(Lint pos)
+{
+	int laiziCount = 0;
+	for (Lint i = 0; i < m_handCard[pos].size(); i++)
+	{
+		Card *tmpHandCard = m_handCard[pos][i];
+		if (tmpHandCard->m_color == m_ghostCardReal[0].m_color && tmpHandCard->m_number == m_ghostCardReal[0].m_number)
+		{
+			laiziCount++;
+		}
+	}
+
+	for (Lint i = 0; i < m_outCard[pos].size(); i++)
+	{
+		Card *tmpOutCard = m_handCard[pos][i];
+		if (tmpOutCard->m_color == m_ghostCardReal[0].m_color && tmpOutCard->m_number == m_ghostCardReal[0].m_number)
+		{
+			laiziCount++;
+		}
+	}
+	return (laiziCount == 4);
 }

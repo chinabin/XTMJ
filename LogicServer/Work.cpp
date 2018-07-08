@@ -11,7 +11,7 @@
 #include <openssl/md5.h>
 #include "ActiveManager.h"
 #include "CounterManager.h"
-#include "CH_HN_ZhuanZhuan.h"
+#include "CH_WH_XianTao.h"
 //#include "CH_HN_ZhengZhou.h"
 //#include "CH_HN_HuaShui.h"
 //#include "CH_HN_TuiDaoHu.h"
@@ -58,12 +58,12 @@ bool Work::Init()
 	return false;
 	}*/
 	
-	
-	if(!gCM_HeNan_ZhuanZhuan->Init())
+	/*
+	if(!gCB_WuHan_XianTao->Init())
 	{
 		LLOG_ERROR("gCM_HeNan_ZhuanZhuan::Instance().Init() error");
 		return false;
-	}
+	}*/
 	
 	//以下的牌都是继承的CardBase 和zhuanzhuan不同
 	CardBase::Init();

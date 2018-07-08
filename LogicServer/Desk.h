@@ -113,6 +113,7 @@ public:
 
 	Lint			GetDeskId();
 	Lint			GetPlayerCapacity();
+	Lint            SetPlayerCapacity(Lint playerCapacity);
 
 	void			SetVip(VipLogItem* vip);
 	VipLogItem*		GetVip();

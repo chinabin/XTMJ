@@ -396,6 +396,7 @@ CardVector	CardBase::m_cardFlower;
 
 bool CardBase::Init()
 {
+	LLOG_ERROR("Card count=%d.", CARD_COUNT);
 	Lint index = 0;
 	// 万饼条
 	for (Lint j = 1; j < 4; ++j)	//三种色
@@ -410,36 +411,6 @@ bool CardBase::Init()
 				++index;
 			}
 		}
-	}
-	// 东南西北中发白
-	if ( CARD_COUNT >= 136 )
-	{
-		for (Lint k = 1; k < 8; ++k)  //7张牌
-		{
-			for(Lint i = 0; i < 4; ++i)		//循环加四次
-			{
-				m_card[index].m_color = CARD_COLOR_ZI;
-				m_card[index].m_number = k;
-				m_cardZi.push_back(&m_card[index]);
-				++index;
-			}
-		}
-	}
-	// 春夏秋冬梅兰竹菊
-	if (CARD_COUNT >= 144)
-	{
-		for (Lint i = 1; i < 9; ++i)		// 8张花牌
-		{
-			m_card[index].m_color = CARD_COLOR_FLOWER;
-			m_card[index].m_number = i;
-			m_cardFlower.push_back(&m_card[index]);
-			++index;
-		}
-	}
-
-	for(Lint i = 124; i < 128; ++i)//0-107万柄条，108-123，东南西北，红中124-127，发白128-135
-	{
-		m_cardZhong.push_back(&m_card[i]);
 	}
 
 	gHuPaiCheck.Gen();
@@ -493,6 +464,47 @@ void CardBase::DealCard(CardVector& v1, CardVector& v2, CardVector& v3, CardVect
 	SortCard(v2);
 	SortCard(v3);
 	SortCard(v4);
+}
+
+void CardBase::DealCardThree(CardVector& v1, CardVector& v2, CardVector& v3, CardVector& v4, CardVector& v5, const Card* specialCard, bool needwind, bool needzhong, bool needflower)
+{
+	CardVector mCards;
+
+	for (auto oneCard : m_cardNormal)
+	{
+		if (1 != oneCard->m_color)
+		{
+			mCards.push_back(oneCard);
+		}
+	}
+
+
+	//更新随机因子
+	updateRandomFactor();
+
+	CardVector cardtmp;
+	Lint nSize = mCards.size();
+	while (nSize > 0)
+	{
+		Lint seed1 = L_Rand(0, nSize - 1);
+		cardtmp.push_back(mCards[seed1]);
+		mCards.erase(mCards.begin() + seed1, mCards.begin() + seed1 + 1);
+		nSize = mCards.size();
+	}
+
+	if (specialCard)
+		SwapCardBySpecial(cardtmp, specialCard, needwind, needzhong, needflower);
+
+	v1.insert(v1.begin(), cardtmp.begin(), cardtmp.begin() + 13);
+	v2.insert(v2.begin(), cardtmp.begin() + 13, cardtmp.begin() + 26);
+	v3.insert(v3.begin(), cardtmp.begin() + 26, cardtmp.begin() + 39);
+	v5.insert(v5.begin(), cardtmp.begin() + 39, cardtmp.end());
+
+	std::reverse(v5.begin(), v5.end());		//逆序桌上牌
+
+	SortCard(v1);
+	SortCard(v2);
+	SortCard(v3);
 }
 
 // void CardBase::DealCard(CardVector& v1,CardVector& v2,CardVector& v3,CardVector& v4,CardVector& v5, bool needwind)

@@ -81,6 +81,8 @@ protected:
 		return false;
 	}
 
+	bool hasFourLaizi(Lint pos);
+
 	bool isDeskCardEmpty();		// 判断桌上是否还有牌 由于规则原因 不能直接判断 m_deskCard.empty()
 
 	void printThinkInfo(ThinkTool thinkInfo)

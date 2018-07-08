@@ -735,23 +735,26 @@ Lint RoomVip::CreateVipDesk(LMsgLMG2LCreateDesk* pMsg, User* pUser)
 	}
 
 	Lint baseScore = 1;
+	Lint playerCapacity = 4;
 	std::vector<Lint> tmpPlayType = pMsg->m_playType;
 	for (Lint x = 0; x < tmpPlayType.size(); x++)
 	{
+		LLOG_ERROR("player num=%d.", tmpPlayType[x]);
 		if (400 == tmpPlayType[x])
 		{
 			baseScore = 1;
-			break;
 		}
 		else if (401 == tmpPlayType[x])
 		{
 			baseScore = 2;
-			break;
 		}
 		else if (402 == tmpPlayType[x])
 		{
 			baseScore = 4;
-			break;
+		}
+		else if (407 == tmpPlayType[x])
+		{
+			playerCapacity = 3;
 		}
 	}
 
@@ -787,7 +790,8 @@ Lint RoomVip::CreateVipDesk(LMsgLMG2LCreateDesk* pMsg, User* pUser)
 		return ret.m_errorCode;
 	}
 	desk->m_baseScore = baseScore;
-	LLOG_INFO("RoomVip::CreateVipDesk userid=%d deskid=%d gametype=%d", pUser->GetUserDataId(), pMsg->m_deskID, pMsg->m_state);
+	desk->SetPlayerCapacity(playerCapacity);
+	LLOG_INFO("RoomVip::CreateVipDesk userid=%d deskid=%d gametype=%d, userCount=%d.", pUser->GetUserDataId(), pMsg->m_deskID, pMsg->m_state, desk->GetPlayerCapacity());
 	//////////////////////////////////////////////////////////////////////////
 	VipLogItem* log = gVipLogMgr.GetNewLogItem(circle, pUser->GetUserDataId());
 	log->m_desk = desk;

@@ -96,6 +96,11 @@ Lint Desk::GetPlayerCapacity()
 	return m_iPlayerCapacity;
 }
 
+Lint Desk::SetPlayerCapacity(Lint playerCapacity)
+{
+	m_iPlayerCapacity = playerCapacity;
+}
+
 void Desk::Tick(LTime& curr)
 {
 	CheckReset();
