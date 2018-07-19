@@ -21,6 +21,7 @@ void InsideNet::RecvMsgPack(LBuffPtr recv, LSocketPtr s, bool bIsFromInternal)
 	LMsg* pMsg = parserMsgPack(recv, s);
 	if(pMsg)
 	{
+		LLOG_DEBUG("LogicManager get an message, message id=%d.", pMsg->m_msgId);
 		gWork.Push(pMsg);
 	}
 }

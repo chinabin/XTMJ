@@ -40,6 +40,12 @@ public:
 	void	S2CeUserLogout();
 
 	void	HanderMsg(LMsg* msg);
+
+	void    HanderGetUserGonghuiInfo(LMsgC2SGonghuiInfo* msg);
+	void    HanderUserGonghuiApply();
+	void    HanderUserCreateGonghuiRoom();
+	void    HanderUserQueryGonghuiDesk();
+
 	//玩家创建房间
 	void	HanderUserCreateDesk(LMsgC2SCreateDesk* msg);
 

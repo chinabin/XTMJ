@@ -195,7 +195,7 @@ void Work::HanderMsg(LMsg* msg)
 	case MSG_LMG_2_G_HORSE_INFO:
 		HanderHorseInfo((LMsgLMG2GHorseInfo*) msg);
 		break;
-	case  MSG_L_2_G_MODIFY_USER_STATE:
+	case MSG_L_2_G_MODIFY_USER_STATE:
 		HanderModifyUserState((LMsgL2GModifyUserState*) msg);
 		break;
 	case MSG_CONVERT_CLIENTMSG:
@@ -267,6 +267,7 @@ void Work::_doWithClientMessage(LMsgConvertClientMsg* pMsg)
 	}
 	else
 	{
+		LLOG_ERROR("GateServer receive an mesage, id=%d.", pMsg->msgEntity->m_msgId);
 		_doWithClientOtherMsg(pMsg->msgEntity, pMsg->msgOriginData);
 	}
 }

@@ -224,6 +224,12 @@ bool LMsgFactory::Init()
 	RegestMsg(new LMsgL2CeGateInfo());
 	RegestMsg(new LMsgCe2LUserLogin());
 	RegestMsg(new LMsgCe2LUserIdInfo());
+	RegestMsg(new LMsgCe2LGonghuiInfo());
+	RegestMsg(new LMsgC2SGonghuiInfo());
+	RegestMsg(new LMsgS2CGonghuiInfo());
+	RegestMsg(new LMsgC2SGonghuiApply());
+	RegestMsg(new LMsgC2SQueryGonghuiDesk());
+	RegestMsg(new LMsgC2SCreateGonghuiRoom());
 
 	RegestMsg(new LMsgG2LLogin());
 	RegestMsg(new LMsgG2LUserMsg());

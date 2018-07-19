@@ -25,6 +25,8 @@ public:
 	void addUserLoginInfo(boost::shared_ptr<UserLoginInfo> userLoginInfo);
 	void delUserLoginInfo(Lint iUserId);
 	boost::shared_ptr<CSafeResourceLock<UserLoginInfo> > getUserLoginInfo(Lint iUserId);
+	void setGonghuiInfo(std::vector<Gonghui> gonghuiInfo);
+	std::vector<Gonghui> getUserGonghuiByUserId(Lint userId);
 private:
 	boost::mutex m_mutexUserQueue;
 
@@ -33,6 +35,7 @@ private:
 private:
 	boost::mutex m_mutexUserBaseInfoQueue;
 	std::map<Lint, boost::shared_ptr<UserBaseInfo> >  m_mapUserBaseInfo;			//离线玩家也包含
+	std::vector<Gonghui> m_gonghuiInfo;
 private:
 	boost::mutex m_mutexUserLoginInfoQueue;
 	std::map<Lint, boost::shared_ptr<UserLoginInfo> > m_mapUserLoginInfo;

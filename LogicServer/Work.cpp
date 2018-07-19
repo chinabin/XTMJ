@@ -769,6 +769,7 @@ void Work::handerLMGAddToDesk(LMsgLMG2LAddToDesk* msg)
 		pUser = new User(msg->m_usert, msg->m_gateId);
 		if (pUser)
 		{
+			LLOG_ERROR("user id=%d.", pUser->GetUserDataId());
 			pUser->SetIp(msg->m_ip);
 			UserManager::Instance().AddUser(pUser);
 			pUser->Login();

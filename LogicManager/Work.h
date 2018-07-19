@@ -45,6 +45,9 @@ protected:
 	void			HanderClientIn(LMsgIn* msg);
 	void			HanderUserKick(LMsgKick* msg);
 
+	void            HanderCenterGonghuiInfo(LMsgCe2LGonghuiInfo* msg);
+	void            PrintGonghuiInfo(std::vector<Gonghui> gonghuiInfo);
+
 	//center发送玩家id信息
 	void			HanderCenterUserInInfo(LMsgCe2LUserIdInfo*msg);
 

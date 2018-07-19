@@ -257,6 +257,15 @@ void User::HanderMsg(LMsg* msg)
 {
 	switch (msg->m_msgId)
 	{
+	case MSG_C_2_S_GONGHUI_INFO:
+		HanderGetUserGonghuiInfo((LMsgC2SGonghuiInfo*)msg);
+		break;
+	case MSG_C_2_S_GONGHUI_APPLY:
+		break;
+	case MSG_C_2_S_GONGHUI_CREATEROOM:
+		break;
+	case MSG_C_2_S_GONGHUI_QUERYDESK:
+		break;
 	case MSG_C_2_S_CREATE_ROOM:
 		HanderUserCreateDesk((LMsgC2SCreateDesk*)msg);
 		break;
@@ -336,6 +345,19 @@ void User::HanderMsg(LMsg* msg)
 
 //////////////////////////////////////////////////////////////////////////
 //注释玩家操作
+
+void User::HanderGetUserGonghuiInfo(LMsgC2SGonghuiInfo* msg)
+{
+	if (NULL == msg)
+	{
+		return;
+	}
+
+	LMsgS2CGonghuiInfo send;
+	send.m_userId = m_userData.m_id;
+	send.m_gonghui = gUserManager.getUserGonghuiByUserId(send.m_userId);
+	Send(send);
+}
 
 void User::HanderUserCreateDesk(LMsgC2SCreateDesk* msg)
 {

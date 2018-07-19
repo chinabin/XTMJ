@@ -26,7 +26,7 @@ UserManager::~UserManager()
 bool UserManager::Init()
 {
 	_loadUserInfoFromDB();
-
+	_loadGonghuiInfoFromDB();
 	//_loadTestData();
 	return true;
 }
@@ -109,6 +109,21 @@ boost::shared_ptr<CSafeUser> UserManager::getUser(Lint iUserId)
 	}
 
 	return safeUser;
+}
+
+void UserManager::loadGonghuiInfo(Lint serverID)
+{
+	boost::mutex::scoped_lock l(m_mutexQueue);
+	LMsgCe2LGonghuiInfo sendMsg;
+	for (auto it = m_mapId2Gonghui.begin(); it != m_mapId2Gonghui.end(); it++)
+	{
+		sendMsg.m_gonghui.push_back(it->second);
+	}
+	sendMsg.m_count = m_mapId2Gonghui.size();
+	sendMsg.m_hasSentAll = 1;
+
+	gWork.SendMsgToLogic(sendMsg, serverID, 2000);
+	LLOG_ERROR("complete load gonghui info, size=%d.", sendMsg.m_count);
 }
 
 void UserManager::LoadUserIdInfo(Lint serverID)
@@ -237,6 +252,161 @@ void UserManager::_loadTestData()
 
 		gWork.Push(pTest);
 	}
+}
+
+bool UserManager::_loadGonghuiInfoFromDB()
+{
+	LDBSession dbSession2;
+	if (!dbSession2.Init(gConfig.GetDbHost(), gConfig.GetDbUser(), gConfig.GetDbPass(), gConfig.GetDbName(), "utf8mb4", gConfig.GetDbPort()))
+	{
+		LLOG_ERROR("Fail to init db session.");
+		return false;
+	}
+
+	bool m_bLoadGonhuiSuccess = true;
+	std::stringstream sql2;
+	sql2 << "SELECT id, name, adminId, roomPolicy FROM gonghui";
+
+	if (mysql_real_query(dbSession2.GetMysql(), sql2.str().c_str(), sql2.str().size()))
+	{
+		LLOG_ERROR("UserManager::LoadGonghuiInfo sql error %s", mysql_error(dbSession2.GetMysql()));
+		return false;
+	}
+
+	MYSQL_RES* res2 = mysql_store_result(dbSession2.GetMysql());
+	if (res2 == NULL)
+	{
+		LLOG_ERROR("Fail to store gonghui result. Error = %s", mysql_error(dbSession2.GetMysql()));
+		return false;
+	}
+
+	MYSQL_ROW row2 = mysql_fetch_row(res2);
+	if (!row2)
+	{
+		mysql_free_result(res2);
+		return false;
+	}
+
+	while (row2)
+	{
+		Gonghui gonghui;
+		gonghui.m_gonghuiId = atoi(*row2++);
+		gonghui.m_gonghuiName = *row2++;
+		gonghui.m_adminUserId = atoi(*row2++);
+		gonghui.m_roomPolicy = *row2++;
+		LLOG_ERROR("gonghui info: id=%d, name=%s, adminUserId=%d, roomPolciy=%s.", gonghui.m_gonghuiId, gonghui.m_gonghuiName.c_str(), gonghui.m_adminUserId, gonghui.m_roomPolicy.c_str());
+		std::vector<PaiJuInfo> paijuInfo = _getPaiJuByGonghuiId(gonghui.m_gonghuiId);
+		gonghui.m_paijuInfo = paijuInfo;
+		gonghui.m_paijuCount = paijuInfo.size();
+
+		std::vector<GonghuiUser> userInfo = _getUserInfoByGonghuiId(gonghui.m_gonghuiId);
+		gonghui.m_userCount = userInfo.size();
+		gonghui.m_userInfo = userInfo;
+		m_mapId2Gonghui[gonghui.m_gonghuiId] = gonghui;
+		row2 = mysql_fetch_row(res2);
+	}
+
+	mysql_free_result(res2);
+}
+
+std::vector<GonghuiUser>  UserManager::_getUserInfoByGonghuiId(Lint gonghuiId)
+{
+	std::vector<GonghuiUser> userInfo;
+	LDBSession dbSession;
+	if (!dbSession.Init(gConfig.GetDbHost(), gConfig.GetDbUser(), gConfig.GetDbPass(), gConfig.GetDbName(), "utf8mb4", gConfig.GetDbPort()))
+	{
+		LLOG_ERROR("Fail to init db session.");
+		return userInfo;
+	}
+
+	std::stringstream sql;
+	sql << "SELECT a.userId, b.Nike FROM r_gonghui_user a, user b where a.userId = b.Id and a.gonghuiId = ";
+	sql << gonghuiId;
+	LLOG_ERROR("sql str=%s.", sql.str().c_str());
+	if (mysql_real_query(dbSession.GetMysql(), sql.str().c_str(), sql.str().size()))
+	{
+		LLOG_ERROR("Fail to query gonghui user info. Error = %s", mysql_error(dbSession.GetMysql()));
+		return userInfo;
+	}
+
+	MYSQL_RES* res = mysql_store_result(dbSession.GetMysql());
+	if (res == NULL)
+	{
+		LLOG_ERROR("Fail to store gonghui userinfo result. Error = %s", mysql_error(dbSession.GetMysql()));
+		return userInfo;
+	}
+
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if (!row)
+	{
+		LLOG_ERROR("No data from user info db. Error = %s", mysql_error(dbSession.GetMysql()));
+		return userInfo;
+	}
+
+	while (row)
+	{
+		GonghuiUser gonghuiUser;
+		gonghuiUser.id = atoi(*row++);
+		gonghuiUser.name = *row++;
+		userInfo.push_back(gonghuiUser);
+		row = mysql_fetch_row(res);
+	}
+	LLOG_ERROR("complete load gonghui user info, size=%d.", userInfo.size());
+	mysql_free_result(res);
+}
+
+std::vector<PaiJuInfo> UserManager::_getPaiJuByGonghuiId(Lint gonghuiId)
+{
+	std::vector<PaiJuInfo> paijuList;
+	LDBSession dbSession;
+	if (!dbSession.Init(gConfig.GetDbHost(), gConfig.GetDbUser(), gConfig.GetDbPass(), gConfig.GetDbName(), "utf8mb4", gConfig.GetDbPort()))
+	{
+		LLOG_ERROR("Fail to init db session.");
+		return paijuList;
+	}
+
+	std::stringstream sql;
+	sql << "SELECT roomId, roomCount, score, type, state, user1, user2, user3, user4 FROM room where gonghuiId = " ;
+	sql << gonghuiId;
+
+	if (mysql_real_query(dbSession.GetMysql(), sql.str().c_str(), sql.str().size()))
+	{
+		LLOG_ERROR("Fail to query paiJu. Error = %s", mysql_error(dbSession.GetMysql()));
+		return paijuList;
+	}
+
+	MYSQL_RES* res = mysql_store_result(dbSession.GetMysql());
+	if (res == NULL)
+	{
+		LLOG_ERROR("Fail to store paiJu result. Error = %s", mysql_error(dbSession.GetMysql()));
+		return paijuList;
+	}
+
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if (!row)
+	{
+		LLOG_ERROR("No data from paiJu db. Error = %s", mysql_error(dbSession.GetMysql()));
+		return paijuList;
+	}
+
+	while (row)
+	{
+		PaiJuInfo paiJu;
+		paiJu.m_roomId = atoi(*row++);
+		paiJu.m_roomCounts = atoi(*row++);
+		paiJu.m_roomScore = atoi(*row++);
+		paiJu.m_roomType = *row++;
+		paiJu.m_roomState = *row++;
+		paiJu.m_user1 = *row++;
+		paiJu.m_user2 = *row++;
+		paiJu.m_user3 = *row++;
+		paiJu.m_user4 = *row++;
+
+		paijuList.push_back(paiJu);
+		row = mysql_fetch_row(res);
+	}
+
+	mysql_free_result(res);
 }
 
 bool UserManager::_loadUserInfoFromDB()

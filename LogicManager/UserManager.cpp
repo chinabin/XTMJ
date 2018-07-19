@@ -199,6 +199,34 @@ void UserManager::delUserLoginInfo(Lint iUserId)
 	m_mapUserLoginInfo.erase(iUserId);
 }
 
+void UserManager::setGonghuiInfo(std::vector<Gonghui> gonghuiInfo)
+{
+	m_gonghuiInfo = gonghuiInfo;
+}
+
+std::vector<Gonghui> UserManager::getUserGonghuiByUserId(Lint userId)
+{
+	LLOG_ERROR("begin to get user gonghui info, userId=%d, gonghui size=%d.", userId, m_gonghuiInfo.size());
+	std::vector<Gonghui> gonghuiInfo;
+	for (Gonghui gonghui : m_gonghuiInfo)
+	{
+		std::vector<GonghuiUser> userList = gonghui.m_userInfo;
+
+		LLOG_ERROR("gonghui info, gonghuiId=%d, gonghuiName=%s, adminUserId=%d.", gonghui.m_gonghuiId, gonghui.m_gonghuiName.c_str(), gonghui.m_adminUserId);
+
+		for (GonghuiUser tmpUser : userList)
+		{
+			LLOG_DEBUG("user id=%d, name=%s.", tmpUser.id, tmpUser.name.c_str());
+			if (tmpUser.id == userId)
+			{
+				LLOG_ERROR("find gonghui info, userId=%d, gonghuiId=%d, gonghuiName=%s, adnmin=%d.", userId, gonghui.m_gonghuiId, gonghui.m_gonghuiName.c_str(), gonghui.m_adminUserId);
+				gonghuiInfo.push_back(gonghui);
+			}
+		}
+	}
+	return gonghuiInfo;
+}
+
 boost::shared_ptr<CSafeResourceLock<UserLoginInfo> > UserManager::getUserLoginInfo(Lint iUserId)
 {
 	boost::shared_ptr<UserLoginInfo> userLoginInfo;

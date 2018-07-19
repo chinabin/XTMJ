@@ -236,6 +236,19 @@ enum LMSG_ID
 	MSG_C_2_S_LOGIN_GATE = 170,	//客户端登录Gate
 	MSG_S_2_C_LOGIN_GATE = 171,	//Gate回客户端登录消息
 
+	// 工会相关接口
+	MSG_C_2_S_GONGHUI_INFO = 180, // 客戶端请求用户工会信息
+	MSG_S_2_C_GONGHUI_INFO = 181, // 服务器返回用户工会信息
+
+	MSG_C_2_S_GONGHUI_APPLY = 182, // 客户端申请加入工会
+    MSG_C_2_S_GONGHUI_ADDUSER = 183, // 会长同意用户加入工会
+
+	MSG_C_2_S_GONGHUI_CREATEROOM = 184, // 会长申请创建工会房
+
+	MSG_C_2_S_GONGHUI_QUERYDESK = 186, // 查询工会房间信息
+
+	// 工会房间状态变更消息，自动发给已登录的用户相关工会信息
+
 	// 活动 200 - 300
 	MSG_S_2_C_ACTIVITY_INFO = 200,			//通用的活动内容 推动给客户端
 	MSG_C_2_S_ACTIVITY_WRITE_PHONE = 201,	//填写活动相关的电话号码
@@ -285,6 +298,7 @@ enum LMSG_ID
 	
 	MSG_L_2_CE_GATE_INFO = 6002, //logic同步gate信息到center
 
+	MSG_CE_2_L_GONHUI_INFO = 6001, // center同步工会信息
 	MSG_CE_2_L_USER_ID_INFO = 6003, //center同步玩家id信息
 
 	MSG_CE_2_L_USER_LOGIN = 6004, //center同步玩家请求登录的消息
@@ -5899,6 +5913,379 @@ struct LMsgS2CTaskReward:public LMsgSC
 	}
 
 	virtual LMsg* Clone(){ return new LMsgS2CTaskReward(); }
+};
+
+struct PaiJuInfo
+{
+	Lint m_roomId;    // 房间ID
+	Lint m_roomCounts;  // 局数
+	Lstring m_roomType;  //为3表示3人麻将，为4表示4人麻将
+	Lint m_roomScore;  // 牌局底分
+	Lstring m_roomState;  // 房间状态
+	Lstring m_user1;
+	Lstring m_user2;
+	Lstring m_user3;
+	Lstring m_user4;
+
+	PaiJuInfo()
+	{
+		m_roomId = 0;
+		m_roomCounts = 0;
+	}
+
+	MSGPACK_DEFINE(m_roomId, m_roomCounts, m_roomType, m_roomScore, m_roomState, m_user1, m_user2, m_user3, m_user4);
+};
+
+struct GonghuiUser
+{
+	Lint id;
+	Lstring name;
+
+	MSGPACK_DEFINE(id, name);
+};
+
+struct Gonghui
+{
+	Lint m_gonghuiId;
+	Lstring m_gonghuiName;
+	Lint m_adminUserId;
+	Lstring m_roomPolicy;   // 工会房间策略：房间类型，房间底分，房间局数，房间个数
+	Lint m_paijuCount;   // 当前工会下有多少房间(当前未去除已开始房间)
+	std::vector<PaiJuInfo> m_paijuInfo;
+	Lint m_userCount;    // 工会下有多少用户
+	std::vector<GonghuiUser> m_userInfo;  // 用户的ID信息
+
+	Gonghui()
+	{
+		m_gonghuiId = 0;
+		m_gonghuiName = "";
+		m_adminUserId = 0;
+		m_userCount = 0;
+		m_roomPolicy = "";
+	}
+
+	MSGPACK_DEFINE(m_gonghuiId, m_gonghuiName, m_adminUserId, m_roomPolicy, m_paijuCount, m_paijuInfo, m_userCount, m_userInfo);
+
+	bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		ReadMapData(obj, NAME_TO_STR(m_gonghuiName), m_gonghuiName);
+		ReadMapData(obj, NAME_TO_STR(m_adminUserId), m_adminUserId);
+		ReadMapData(obj, NAME_TO_STR(m_roomPolicy), m_roomPolicy);
+		ReadMapData(obj, NAME_TO_STR(m_paijuCount), m_paijuCount);
+		ReadMapData(obj, NAME_TO_STR(m_paijuInfo), m_paijuInfo);
+		ReadMapData(obj, NAME_TO_STR(m_userCount), m_userCount);
+		ReadMapData(obj, NAME_TO_STR(m_userInfo), m_userInfo);
+		return true;
+	}
+
+	bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteKeyValue(pack, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		WriteKeyValue(pack, NAME_TO_STR(m_gonghuiName), m_gonghuiName);
+		WriteKeyValue(pack, NAME_TO_STR(m_adminUserId), m_adminUserId);
+		WriteKeyValue(pack, NAME_TO_STR(m_roomPolicy), m_roomPolicy);
+		WriteKeyValue(pack, NAME_TO_STR(m_paijuCount), m_paijuCount);
+		WriteKeyValue(pack, NAME_TO_STR(m_paijuInfo), m_paijuInfo);
+		WriteKeyValue(pack, NAME_TO_STR(m_userCount), m_userCount);
+		WriteKeyValue(pack, NAME_TO_STR(m_userInfo), m_userInfo);
+		return true;
+	}
+
+	bool Read(LBuff& buff)
+	{
+		buff.Read(m_gonghuiId);
+		buff.Read(m_gonghuiName);
+		buff.Read(m_adminUserId);
+		buff.Read(m_roomPolicy);
+
+		buff.Read(m_paijuCount);
+		for (int i = 0; i < m_paijuCount; i++)
+		{
+			PaiJuInfo paiJu;
+			buff.Read(paiJu.m_roomId);
+			buff.Read(paiJu.m_roomCounts);
+			buff.Read(paiJu.m_roomType);
+			buff.Read(paiJu.m_roomScore);
+			buff.Read(paiJu.m_roomState);
+			buff.Read(paiJu.m_user1);
+			buff.Read(paiJu.m_user2);
+			buff.Read(paiJu.m_user3);
+			buff.Read(paiJu.m_user4);
+			m_paijuInfo.push_back(paiJu);
+		}
+
+		buff.Read(m_userCount);
+		for (int j = 0; j < m_userCount; j++)
+		{
+			GonghuiUser tmpUser;
+			buff.Read(tmpUser.id);
+			buff.Read(tmpUser.name);
+			m_userInfo.push_back(tmpUser);
+		}
+		return true;
+	}
+
+	bool Write(LBuff& buff)
+	{
+		buff.Write(m_gonghuiId);
+		buff.Write(m_gonghuiName);
+		buff.Write(m_adminUserId);
+		buff.Write(m_roomPolicy);
+		buff.Write(m_paijuCount);
+		for (int i = 0; i < m_paijuCount; i++)
+		{
+			buff.Write(m_paijuInfo[i].m_roomId);
+			buff.Write(m_paijuInfo[i].m_roomCounts);
+			buff.Write(m_paijuInfo[i].m_roomType);
+			buff.Write(m_paijuInfo[i].m_roomScore);
+			buff.Write(m_paijuInfo[i].m_roomState);
+			buff.Write(m_paijuInfo[i].m_user1);
+			buff.Write(m_paijuInfo[i].m_user2);
+			buff.Write(m_paijuInfo[i].m_user3);
+			buff.Write(m_paijuInfo[i].m_user4);
+		}
+
+		buff.Write(m_userCount);
+		for (int j = 0; j < m_userCount; j++)
+		{
+			buff.Write(m_userInfo[j].id);
+			buff.Write(m_userInfo[j].name);
+		}
+		return true;
+	}
+};
+
+struct LMsgCe2LGonghuiInfo : public LMsg
+{
+	Lint m_count;
+	std::vector<Gonghui> m_gonghui;
+	Lint	m_hasSentAll; //已经发送所有了的id。 0：没有 1：已经发送所有
+
+	LMsgCe2LGonghuiInfo() : LMsg(MSG_CE_2_L_GONHUI_INFO)
+	{
+		m_count = 0;
+	}
+
+	virtual bool Read(LBuff& buff)
+	{
+		buff.Read(m_count);
+		for (Lint i = 0; i < m_count; ++i)
+		{
+			m_gonghui.push_back(Gonghui());
+			m_gonghui.back().Read(buff);
+		}
+		buff.Read(m_hasSentAll);
+
+		return true;
+	}
+
+	virtual bool Write(LBuff& buff)
+	{
+		m_count = m_gonghui.size();
+		buff.Write(m_count);
+		for (Lint i = 0; i < m_count; ++i)
+		{
+			m_gonghui[i].Write(buff);
+		}
+		buff.Write(m_hasSentAll);
+
+		return true;
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgCe2LGonghuiInfo();
+	}
+};
+
+// 工会相关消息定义在这里
+
+struct LMsgC2SGonghuiInfo : public LMsgSC
+{
+	Lstring m_strUserUUID;
+	Lint		m_userId;	// 客户端不需要填充 服务器内部转发使用
+
+	LMsgC2SGonghuiInfo() : LMsgSC(MSG_C_2_S_GONGHUI_INFO)
+	{
+		m_userId = 0;
+	}
+
+	virtual bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_strUserUUID), m_strUserUUID);
+		ReadMapData(obj, NAME_TO_STR(m_userId), m_userId);
+		return true;
+	}
+
+	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteMap(pack, 3);
+		WriteKeyValue(pack, "m_msgId", m_msgId);
+		WriteKeyValue(pack, "m_strUserUUID", m_strUserUUID);
+		WriteKeyValue(pack, NAME_TO_STR(m_userId), m_userId);
+		return true;
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgC2SGonghuiInfo();
+	}
+};
+
+struct LMsgS2CGonghuiInfo : public LMsgSC
+{
+	Lstring m_strUserUUID;
+	Lint		m_userId;
+	std::vector<Gonghui> m_gonghui;
+
+	LMsgS2CGonghuiInfo() : LMsgSC(MSG_S_2_C_GONGHUI_INFO)
+	{
+		m_userId = 0;
+	}
+
+	virtual bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_strUserUUID), m_strUserUUID);
+		ReadMapData(obj, NAME_TO_STR(m_userId), m_userId);
+		ReadMapData(obj, NAME_TO_STR(m_gonghui), m_gonghui);
+		return true;
+	}
+
+	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteMap(pack, 4);
+		WriteKeyValue(pack, "m_msgId", m_msgId);
+		WriteKeyValue(pack, "m_strUserUUID", m_strUserUUID);
+		WriteKeyValue(pack, NAME_TO_STR(m_userId), m_userId);
+		WriteKeyValue(pack, NAME_TO_STR(m_gonghui), m_gonghui);
+		return true;
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgS2CGonghuiInfo();
+	}
+};
+
+struct LMsgC2SGonghuiApply : public LMsgSC
+{
+	Lstring m_strUserUUID;  // 客户端不需要填充 服务器内部转发使用
+	Lint	m_userId;
+	Lint    m_gonghuiId;
+
+	LMsgC2SGonghuiApply() : LMsgSC(MSG_C_2_S_GONGHUI_APPLY)
+	{
+		m_userId = 0;
+		m_gonghuiId = 0;
+	}
+
+	virtual bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_strUserUUID), m_strUserUUID);
+		ReadMapData(obj, NAME_TO_STR(m_userId), m_userId);
+		ReadMapData(obj, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		return true;
+	}
+
+	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteMap(pack, 4);
+		WriteKeyValue(pack, "m_msgId", m_msgId);
+		WriteKeyValue(pack, "m_strUserUUID", m_strUserUUID);
+		WriteKeyValue(pack, NAME_TO_STR(m_userId), m_userId);
+		WriteKeyValue(pack, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		return true;
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgC2SGonghuiApply();
+	}
+};
+
+struct LMsgC2SQueryGonghuiDesk : public LMsgSC
+{
+	Lstring m_strUserUUID;  // 客户端不需要填充 服务器内部转发使用
+	Lint	m_userId;
+	Lint    m_gonghuiId;
+
+	LMsgC2SQueryGonghuiDesk() : LMsgSC(MSG_C_2_S_GONGHUI_QUERYDESK)
+	{
+		m_userId = 0;
+		m_gonghuiId = 0;
+	}
+
+	virtual bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_strUserUUID), m_strUserUUID);
+		ReadMapData(obj, NAME_TO_STR(m_userId), m_userId);
+		ReadMapData(obj, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		return true;
+	}
+
+	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteMap(pack, 4);
+		WriteKeyValue(pack, "m_msgId", m_msgId);
+		WriteKeyValue(pack, "m_strUserUUID", m_strUserUUID);
+		WriteKeyValue(pack, NAME_TO_STR(m_userId), m_userId);
+		WriteKeyValue(pack, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		return true;
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgC2SQueryGonghuiDesk();
+	}
+};
+
+struct LMsgC2SCreateGonghuiRoom : public LMsgSC
+{
+	Lstring m_strUserUUID;  // 客户端不需要填充 服务器内部转发使用
+	Lint	m_userId;
+	Lint    m_gonghuiId;
+	Lint    m_userNumber;
+	Lint    m_baseScore;
+	Lint    m_paijuCount;
+
+	LMsgC2SCreateGonghuiRoom() : LMsgSC(MSG_C_2_S_GONGHUI_CREATEROOM)
+	{
+		m_userId = 0;
+		m_gonghuiId = 0;
+		m_userNumber = 0;
+		m_baseScore = 0;
+		m_paijuCount = 0;
+	}
+
+	virtual bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_strUserUUID), m_strUserUUID);
+		ReadMapData(obj, NAME_TO_STR(m_userId), m_userId);
+		ReadMapData(obj, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		ReadMapData(obj, NAME_TO_STR(m_userNumber), m_userNumber);
+		ReadMapData(obj, NAME_TO_STR(m_baseScore), m_baseScore);
+		ReadMapData(obj, NAME_TO_STR(m_paijuCount), m_paijuCount);
+		return true;
+	}
+
+	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteMap(pack, 4);
+		WriteKeyValue(pack, "m_msgId", m_msgId);
+		WriteKeyValue(pack, "m_strUserUUID", m_strUserUUID);
+		WriteKeyValue(pack, NAME_TO_STR(m_userId), m_userId);
+		WriteKeyValue(pack, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		WriteKeyValue(pack, NAME_TO_STR(m_userNumber), m_userNumber);
+		WriteKeyValue(pack, NAME_TO_STR(m_baseScore), m_baseScore);
+		WriteKeyValue(pack, NAME_TO_STR(m_paijuCount), m_paijuCount);
+		return true;
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgC2SCreateGonghuiRoom();
+	}
 };
 
 #endif

@@ -148,7 +148,7 @@ void Work::Push(void* msg)
 		return;
 	}
 
-	//LLOG_DEBUG("Work recv msg:%d", pMessage->m_msgId);
+	LLOG_DEBUG("Work recv msg:%d", pMessage->m_msgId);
 
 	switch(pMessage->m_msgId)
 	{
@@ -459,6 +459,7 @@ LTime& Work::GetCurTime()
 
 void Work::HanderMsg(LMsg* msg)
 {
+	LLOG_DEBUG("receive an message, msgid=%d.", msg->m_msgId);
 	//玩家请求登录
 	switch(msg->m_msgId)
 	{
@@ -471,6 +472,10 @@ void Work::HanderMsg(LMsg* msg)
 
 	//////////////////////////////////////////////////////////////////////////
 	//center 跟 logicmanager之间的交互
+	case MSG_CE_2_L_GONHUI_INFO:
+		// TODO
+		HanderCenterGonghuiInfo((LMsgCe2LGonghuiInfo*)msg);
+		break;
 	case MSG_CE_2_L_USER_ID_INFO:
 		HanderCenterUserInInfo((LMsgCe2LUserIdInfo*)msg);
 		break;
@@ -625,6 +630,32 @@ void Work::SendToCenter(LMsg& msg)
 	{
 		m_centerClient->Send(msg.GetSendBuff());
 	}
+}
+
+void Work::PrintGonghuiInfo(std::vector<Gonghui> gonghuiInfo)
+{
+	for (Gonghui gonghui : gonghuiInfo)
+	{
+		LLOG_DEBUG("gonghui info: id=%d, name=%s, adminUserId=%d, roomPolicy=%s, userCount=%d.", gonghui.m_gonghuiId, gonghui.m_gonghuiName.c_str(), gonghui.m_adminUserId, gonghui.m_roomPolicy.c_str(), gonghui.m_userCount);
+		std::vector<GonghuiUser> x = gonghui.m_userInfo;
+		for (GonghuiUser gonghuiUser : x)
+		{
+			LLOG_DEBUG("gonghui user: %d, %s.", gonghuiUser.id, gonghuiUser.name.c_str());
+		}
+	}
+}
+
+void Work::HanderCenterGonghuiInfo(LMsgCe2LGonghuiInfo* msg)
+{
+	if (NULL == msg)
+	{
+		LLOG_ERROR("Error, gonghui info msg is null.");
+		return;
+	}
+
+	std::vector<Gonghui> gonghuiInfo = msg->m_gonghui;
+	gUserManager.setGonghuiInfo(gonghuiInfo);
+	PrintGonghuiInfo(gonghuiInfo);
 }
 
 void Work::HanderCenterUserInInfo(LMsgCe2LUserIdInfo*msg)

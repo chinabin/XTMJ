@@ -409,6 +409,7 @@ void Work::HanderLogicLogin(LMsgL2CeLogin* msg)
 	if(msg->m_needLoadUserInfo == 1)
 	{
 		gUserManager.LoadUserIdInfo(msg->m_ID);
+		gUserManager.loadGonghuiInfo(msg->m_ID);
 	}
 }
 
