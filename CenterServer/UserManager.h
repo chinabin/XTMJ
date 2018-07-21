@@ -29,6 +29,7 @@ public:
 	void SaveUserLastLogin(DUser* user);
 protected:
 	bool	_loadUserInfoFromDB();
+	bool    _clearDirtyPaijuInfoFromDB();
 	bool    _loadGonghuiInfoFromDB();
 	std::vector<PaiJuInfo> _getPaiJuByGonghuiId(Lint gonghuiId);
 	std::vector<GonghuiUser>  _getUserInfoByGonghuiId(Lint gonghuiId);

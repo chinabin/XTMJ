@@ -101,6 +101,8 @@ public:
 
 	Lint			CreateVipDesk(LMsgLMG2LCreateDesk* pMsg,User* pUser);
 
+	Lint			CreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* pMsg, User* pUser);
+
 	// pUsers的位置是根据位置排好序的
 	Lint			CreateVipCoinDesk(LMsgCN2LCreateCoinDesk*pMsg,User* pUsers[]);
 

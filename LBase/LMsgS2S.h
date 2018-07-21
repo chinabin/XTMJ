@@ -769,6 +769,7 @@ struct LMsgG2LUserMsg :public LMsg
 	virtual~LMsgG2LUserMsg()
 	{
 		if (m_userMsg)
+			
 			delete m_userMsg;
 	}
 
@@ -1630,6 +1631,55 @@ struct LMsgL2GModifyUserState:public LMsg
 	}
 };
 
+struct LMsgLMG2LCreateGonghuiDesk : public LMsg
+{
+	Lint m_userId;    // 创建者，即会场id
+	Lint m_deskId;    
+	Lint m_gonghuiId; 
+	Lint m_baseScore;    // 桌子底分
+	Lint m_roomType;    // 桌子牌局数
+	Lstring m_playType;  // 3：3人麻将，4：4人麻将
+	// Lint m_deskCount;    // 创建的房子数量
+
+	LMsgLMG2LCreateGonghuiDesk() :LMsg(MSG_LMG_2_L_CREATE_GONGHUIDESK)
+	{
+		m_userId = 0;
+		m_deskId = 0;
+		m_gonghuiId = 0;
+		m_baseScore = 0;
+		m_roomType = 0;
+		m_playType = "";
+		//m_deskCount = 0;
+	}
+	virtual bool Read(LBuff& buff)
+	{
+		buff.Read(m_userId);
+		buff.Read(m_deskId);
+		buff.Read(m_gonghuiId);
+		buff.Read(m_baseScore);
+		buff.Read(m_roomType);
+		buff.Read(m_playType);
+		//buff.Read(m_deskCount);
+		return true;
+	}
+
+	virtual bool Write(LBuff& buff)
+	{
+		buff.Write(m_userId);
+		buff.Write(m_deskId);
+		buff.Write(m_gonghuiId);
+		buff.Write(m_baseScore);
+		buff.Write(m_roomType);
+		buff.Write(m_playType);
+		//buff.Write(m_deskCount);
+		return true;
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgLMG2LCreateGonghuiDesk();
+	}
+};
 
 struct LMsgLMG2LCreateDesk : public LMsg
 {

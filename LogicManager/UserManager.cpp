@@ -199,17 +199,47 @@ void UserManager::delUserLoginInfo(Lint iUserId)
 	m_mapUserLoginInfo.erase(iUserId);
 }
 
+std::vector<Gonghui> UserManager::getGonghuiInfo()
+{
+	std::vector<Gonghui> tmpGonghuiInfo;
+	
+	std::map<Lint, Gonghui>::iterator iter;
+	for (iter = m_gonghuiInfo.begin(); iter != m_gonghuiInfo.end(); iter++)
+	{
+		tmpGonghuiInfo.push_back(iter->second);
+	}
+
+	return tmpGonghuiInfo;
+}
+
 void UserManager::setGonghuiInfo(std::vector<Gonghui> gonghuiInfo)
 {
-	m_gonghuiInfo = gonghuiInfo;
+	for (Gonghui gonghui : gonghuiInfo)
+	{
+		m_gonghuiInfo[gonghui.m_gonghuiId] = gonghui;
+	}
+}
+
+void UserManager::addGonghuiPaiju(Lint gonghuiId, PaiJuInfo paijuInfo)
+{
+	LLOG_ERROR("add paiju, gonghuiId:%d, roomId=%d,counts=%d,roomType=%s,baseScore=%d.", gonghuiId, paijuInfo.m_roomId, paijuInfo.m_roomCounts, paijuInfo.m_roomType.c_str(), paijuInfo.m_roomScore);
+	std::map<Lint, Gonghui>::iterator iter;
+	iter = m_gonghuiInfo.find(gonghuiId);
+	if (iter != m_gonghuiInfo.end())
+	{
+		iter->second.m_paijuInfo.push_back(paijuInfo);
+		iter->second.m_paijuCount = iter->second.m_paijuCount + 1;
+	}
 }
 
 std::vector<Gonghui> UserManager::getUserGonghuiByUserId(Lint userId)
 {
 	LLOG_ERROR("begin to get user gonghui info, userId=%d, gonghui size=%d.", userId, m_gonghuiInfo.size());
 	std::vector<Gonghui> gonghuiInfo;
-	for (Gonghui gonghui : m_gonghuiInfo)
+	std::map<Lint, Gonghui>::iterator iter;
+	for (iter = m_gonghuiInfo.begin(); iter != m_gonghuiInfo.end(); iter++)
 	{
+		Gonghui gonghui = iter->second;
 		std::vector<GonghuiUser> userList = gonghui.m_userInfo;
 
 		LLOG_ERROR("gonghui info, gonghuiId=%d, gonghuiName=%s, adminUserId=%d.", gonghui.m_gonghuiId, gonghui.m_gonghuiName.c_str(), gonghui.m_adminUserId);

@@ -642,7 +642,72 @@ void Work::PrintGonghuiInfo(std::vector<Gonghui> gonghuiInfo)
 		{
 			LLOG_DEBUG("gonghui user: %d, %s.", gonghuiUser.id, gonghuiUser.name.c_str());
 		}
+
+		Lstring  roomPolicy = gonghui.m_roomPolicy;
+		if ("" == roomPolicy)
+		{
+			LLOG_DEBUG("roomPolicy is empty.");
+			continue;
+		}
+		std::vector<std::string> roomPolicyVec;
+		SplitString(roomPolicy, roomPolicyVec, ",");
+		LLOG_DEBUG("vec size = %d.", roomPolicyVec.size());
+		for (std::string str : roomPolicyVec)
+		{
+			LLOG_DEBUG("value=%s.", str.c_str());
+		}
+		if (roomPolicyVec.size() != 4)
+		{
+			LLOG_ERROR("Error, roomPolicy: %s is invalid.", roomPolicy.c_str());
+			continue;
+		}
+
+		Lint roomCount = stoi(roomPolicyVec[3]);
+		for (Lint i = 0; i < roomCount; i++)
+		{
+			LMsgLMG2LCreateGonghuiDesk send;
+			send.m_userId = gonghui.m_adminUserId;
+
+			send.m_gonghuiId = gonghui.m_gonghuiId;
+			send.m_playType = roomPolicyVec[0];
+			send.m_baseScore = stoi(roomPolicyVec[1]);
+			send.m_roomType = stoi(roomPolicyVec[2]);
+
+			Lstring ipAddr = "127.0.0.1";
+			Lint roomId = gDeskManager.GetFreeDeskId(gonghui.m_adminUserId, 1001, 0, send.m_roomType, 16, ipAddr);
+			send.m_deskId = roomId;
+			// 此处暂时和LogicServer的id保持一致
+			SendMessageToAllLogic(send);
+
+			PaiJuInfo paijuInfo;
+			paijuInfo.m_roomId = roomId;
+			paijuInfo.m_roomCounts = roomCount;
+			paijuInfo.m_roomType = send.m_playType;
+			paijuInfo.m_roomScore = send.m_baseScore;
+			paijuInfo.m_roomState = "IDLE";
+			paijuInfo.m_user1 = "";
+			paijuInfo.m_user2 = "";
+			paijuInfo.m_user3 = "";
+			paijuInfo.m_user4 = "";
+			gUserManager.addGonghuiPaiju(gonghui.m_gonghuiId, paijuInfo);
+		}
 	}
+}
+
+void Work::SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c)
+{
+	std::string::size_type pos1, pos2;
+	pos2 = s.find(c);
+	pos1 = 0;
+	while (std::string::npos != pos2)
+	{
+		v.push_back(s.substr(pos1, pos2 - pos1));
+
+		pos1 = pos2 + c.size();
+		pos2 = s.find(c, pos1);
+	}
+	if (pos1 != s.length())
+		v.push_back(s.substr(pos1));
 }
 
 void Work::HanderCenterGonghuiInfo(LMsgCe2LGonghuiInfo* msg)
@@ -655,7 +720,7 @@ void Work::HanderCenterGonghuiInfo(LMsgCe2LGonghuiInfo* msg)
 
 	std::vector<Gonghui> gonghuiInfo = msg->m_gonghui;
 	gUserManager.setGonghuiInfo(gonghuiInfo);
-	PrintGonghuiInfo(gonghuiInfo);
+	//PrintGonghuiInfo(gonghuiInfo);
 }
 
 void Work::HanderCenterUserInInfo(LMsgCe2LUserIdInfo*msg)
@@ -928,6 +993,8 @@ void Work::HanderLogicLogin(LMsgL2LMGLogin* msg)
 		logicInfo.m_tickTime = 0;
 		m_logicServerInfo[logicInfo.m_logicInfo.m_id] = logicInfo;
 		gActiveManager.PXSendConfig(logicInfo.m_logicInfo.m_id);		// logic登录，发送牌型活动信息
+	
+		PrintGonghuiInfo(gUserManager.getGonghuiInfo());
 	}
 	
 	SendLogicInfoToGates();
@@ -1273,6 +1340,7 @@ void Work::SendMessageToAllLogic(LMsg& msg)
 	auto itLogic = m_logicServerInfo.begin();
 	for (; itLogic != m_logicServerInfo.end(); ++itLogic)
 	{
+		LLOG_ERROR("LogicServer id=%d, msgId=%d.", itLogic->first, msg.m_msgId);
 		itLogic->second.m_logicInfo.m_sp->Send(msg.GetSendBuff());
 	}
 }

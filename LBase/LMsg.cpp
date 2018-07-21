@@ -230,6 +230,7 @@ bool LMsgFactory::Init()
 	RegestMsg(new LMsgC2SGonghuiApply());
 	RegestMsg(new LMsgC2SQueryGonghuiDesk());
 	RegestMsg(new LMsgC2SCreateGonghuiRoom());
+	RegestMsg(new LMsgLMG2LCreateGonghuiDesk());
 
 	RegestMsg(new LMsgG2LLogin());
 	RegestMsg(new LMsgG2LUserMsg());

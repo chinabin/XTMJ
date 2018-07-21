@@ -54,6 +54,9 @@ public:
 	//处理玩家创建桌子
 	void			handerLMGCreateDesk(LMsgLMG2LCreateDesk* msg);
 
+	// 处理自动创建工会房间
+	void            handerLMGCreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* msg);
+
 	//处理玩家加入桌子
 	void			handerLMGAddToDesk(LMsgLMG2LAddToDesk* msg);
 

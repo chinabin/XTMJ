@@ -37,6 +37,8 @@ public:
 	//玩家创建房间
 	Lint	HanderUserCreateDesk(LMsgLMG2LCreateDesk* msg);
 
+	Lint    HanderCreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* msg);
+
 	//玩家进入房间
 	Lint	HanderUserAddDesk(Lint nDeskID);
 

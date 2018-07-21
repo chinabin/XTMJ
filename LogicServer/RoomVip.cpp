@@ -717,6 +717,33 @@ Desk* RoomVip::GetDeskById(Lint id)
 	return NULL;
 }
 
+Lint RoomVip::CreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* pMsg, User* pUser)
+{
+	int circle = pMsg->m_roomType;
+	if (GetDeskById(pMsg->m_deskId) != NULL)
+	{
+		LLOG_ERROR("Error, deskId already in use.");
+		return 0;
+	}
+
+	Desk* desk = GetFreeDesk(pMsg->m_deskId, GameType::MJWuHanXianTao, pMsg->m_roomType);
+	desk->SetPlayerCapacity(stoi(pMsg->m_playType));
+	desk->m_baseScore = pMsg->m_baseScore;
+
+	LLOG_INFO("RoomVip::CreateGonghuiDesk userid=%d deskid=%d gametype=%d, userCount=%d.", pMsg->m_userId, pMsg->m_deskId, 16, desk->GetPlayerCapacity());
+	//////////////////////////////////////////////////////////////////////////
+	VipLogItem* log = gVipLogMgr.GetNewLogItem(circle, pMsg->m_userId);
+	log->m_desk = desk;
+	log->m_curCircle = 0;
+	log->m_maxCircle = circle;
+	log->m_state = 16;
+	log->m_deskId = log->m_desk->GetDeskId();
+	log->m_iPlayerCapacity = desk->GetPlayerCapacity();
+	log->m_desk->SetVip(log);
+
+	return 0;
+}
+
 Lint RoomVip::CreateVipDesk(LMsgLMG2LCreateDesk* pMsg, User* pUser)
 {
 	if (!pUser || !pMsg)

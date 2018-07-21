@@ -112,6 +112,7 @@ protected:
 	void            _checkFreeModel();
 	void            _checkExchActive();
 public:
+	void            SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c);
 	bool			isLogicServerExist(int iLogicServerId);
 	void			SendMessageToAllLogic(LMsg& msg);
 	void			SendMessageToLogic(Lint iLogicServerId, LMsg& msg);

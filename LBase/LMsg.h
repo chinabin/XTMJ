@@ -247,6 +247,8 @@ enum LMSG_ID
 
 	MSG_C_2_S_GONGHUI_QUERYDESK = 186, // 查询工会房间信息
 
+	MSG_LMG_2_L_CREATE_GONGHUIDESK = 190, // 创建工会房间
+
 	// 工会房间状态变更消息，自动发给已登录的用户相关工会信息
 
 	// 活动 200 - 300

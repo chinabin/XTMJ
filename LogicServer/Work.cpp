@@ -291,6 +291,7 @@ LTime& Work::GetCurTime()
 
 void Work::HanderMsg(LMsg* msg)
 {
+	LLOG_DEBUG("receive an message, msgid=%d.", msg->m_msgId);
 	//玩家请求登录
 	switch(msg->m_msgId)
 	{
@@ -310,6 +311,9 @@ void Work::HanderMsg(LMsg* msg)
 		break;
 	case MSG_LMG_2_L_CREATE_DESK:
 		handerLMGCreateDesk((LMsgLMG2LCreateDesk*)msg);
+		break;
+	case MSG_LMG_2_L_CREATE_GONGHUIDESK:
+		handerLMGCreateGonghuiDesk((LMsgLMG2LCreateGonghuiDesk*)msg);
 		break;
 	case MSG_LMG_2_L_ADDTO_DESK:
 		handerLMGAddToDesk((LMsgLMG2LAddToDesk*)msg);
@@ -687,6 +691,15 @@ void Work::SendMsgToDb(LMsg& msg)
 	{
 		m_dbClient->Send(msg.GetSendBuff());
 	}
+}
+
+void Work::handerLMGCreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* msg)
+{
+	// TODO  pUser是否必须？创建工会房间应该不需要，需要剥离出来
+	User* pUser = gUserManager.GetUserbyDataId(msg->m_userId);
+	Lint errorCode = pUser->HanderCreateGonghuiDesk(msg);
+
+	// TODO other things
 }
 
 void Work::handerLMGCreateDesk(LMsgLMG2LCreateDesk* msg)

@@ -171,6 +171,11 @@ void User::HanderMsg(LMsg* msg)
 	}
 }
 
+Lint User::HanderCreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* msg)
+{
+	return gRoomVip.CreateGonghuiDesk(msg, this);
+}
+
 Lint User::HanderUserCreateDesk(LMsgLMG2LCreateDesk* msg)
 {
 	return gRoomVip.CreateVipDesk(msg, this);

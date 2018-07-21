@@ -25,6 +25,7 @@ UserManager::~UserManager()
 
 bool UserManager::Init()
 {
+	_clearDirtyPaijuInfoFromDB();
 	_loadUserInfoFromDB();
 	_loadGonghuiInfoFromDB();
 	//_loadTestData();
@@ -407,6 +408,17 @@ std::vector<PaiJuInfo> UserManager::_getPaiJuByGonghuiId(Lint gonghuiId)
 	}
 
 	mysql_free_result(res);
+}
+
+bool UserManager::_clearDirtyPaijuInfoFromDB()
+{
+	std::stringstream ss;
+	ss << "DELETE FROM room WHERE state in ('IDLE', 'PLAYING')";
+
+	LLOG_DEBUG("UserManager::SaveUser sql =%s", ss.str().c_str());
+
+	Lstring* sql = new Lstring(ss.str());
+	gDbServerManager.Push(sql, 9);
 }
 
 bool UserManager::_loadUserInfoFromDB()
