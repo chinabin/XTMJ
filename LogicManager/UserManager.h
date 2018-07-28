@@ -35,6 +35,7 @@ public:
 	void updateGonghuiPaiju(Lint gonghuiId, Lint roomId, Lstring roomState, Lstring user[4]);
 	std::vector<Gonghui> getUserGonghuiByUserId(Lint userId);
 	Lint gonghuiApplyOp(Lint gonghuiId, Lint userId, bool opResult);
+	std::vector<GonghuiUser> getGonghuiApplyUser(Lint gonghuiId);
 
 	Lint addGonghuiUser(Lint gonghuiId, Lint userId);
 	Lint delGonghuiUser(Lint gognhuiId, Lint userId);
