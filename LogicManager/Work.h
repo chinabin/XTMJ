@@ -46,7 +46,6 @@ protected:
 	void			HanderUserKick(LMsgKick* msg);
 
 	void            HanderCenterGonghuiInfo(LMsgCe2LGonghuiInfo* msg);
-	void            PrintGonghuiInfo(std::vector<Gonghui> gonghuiInfo);
 
 	//center发送玩家id信息
 	void			HanderCenterUserInInfo(LMsgCe2LUserIdInfo*msg);
@@ -98,6 +97,8 @@ public:
 	Lint			getGateIdBySp(LSocketPtr sp);
 	void			SendMessageToAllGate(LMsg& msg);
 	void			SendMessageToGate(Lint gateID, LMsg& msg);
+	void            PrintGonghuiInfo(std::vector<Gonghui> gonghuiInfo);
+	bool            CreateGonghuiRoom(Lint gonghuiId, Lint roomType, Lint playType, Lint baseScoreType);
 private:
 	boost::recursive_mutex m_mutexGateInfo;
 	std::map<Lint, GateInfo> m_gateInfo;

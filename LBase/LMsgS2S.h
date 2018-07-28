@@ -1638,7 +1638,7 @@ struct LMsgLMG2LCreateGonghuiDesk : public LMsg
 	Lint m_gonghuiId; 
 	Lint m_baseScore;    // 桌子底分
 	Lint m_roomType;    // 桌子牌局数
-	Lstring m_playType;  // 3：3人麻将，4：4人麻将
+	Lint m_playType;  // 几人麻将
 	// Lint m_deskCount;    // 创建的房子数量
 
 	LMsgLMG2LCreateGonghuiDesk() :LMsg(MSG_LMG_2_L_CREATE_GONGHUIDESK)
@@ -1648,7 +1648,7 @@ struct LMsgLMG2LCreateGonghuiDesk : public LMsg
 		m_gonghuiId = 0;
 		m_baseScore = 0;
 		m_roomType = 0;
-		m_playType = "";
+		m_playType = 0;
 		//m_deskCount = 0;
 	}
 	virtual bool Read(LBuff& buff)
@@ -1678,6 +1678,77 @@ struct LMsgLMG2LCreateGonghuiDesk : public LMsg
 	virtual LMsg* Clone()
 	{
 		return new LMsgLMG2LCreateGonghuiDesk();
+	}
+};
+
+struct LMsgL2LMGGonghuiDeskChange : public LMsg
+{
+	Lstring m_strUUID;	 //玩家uuid
+	Lint m_gonghuiId;  // 工会ID
+	Lint m_playType;
+	Lint m_baseScore;
+	Lint m_roomId;     // 工会房间ID
+	Lint m_roomState;  // 工会房间状态，为0表示空闲，1表示准备（新用户加入房间），2表示Playing，3表示结束
+	Lint m_user[4]; // 进入房间的用户，当roomState为2时使用，更新数据库数据
+	Lint m_score[4];   // 当房间局数结束时，记录总分数
+
+	LMsgL2LMGGonghuiDeskChange() : LMsg(MSG_L_2_LMG_GONGHUIDESK_CHANGE)
+	{
+		m_gonghuiId = 0;
+		m_roomId = 0;
+		m_playType = 0;
+		m_roomState = 0;
+		m_baseScore = 0;
+		for (int i = 0; i < 4; i++)
+		{
+			m_user[i] = 0;
+			m_score[i] = 0;
+		}
+	}
+
+	virtual bool Read(LBuff& buff)
+	{
+		buff.Read(m_strUUID);
+		buff.Read(m_gonghuiId);
+		buff.Read(m_playType);
+		buff.Read(m_baseScore);
+		buff.Read(m_roomId);
+		buff.Read(m_roomState);
+		int i = 0;
+		for (i = 0; i < 4; i++)
+		{
+			buff.Read(m_user[i]);
+		}
+
+		for (i = 0; i < 4; i++)
+		{
+			buff.Read(m_score[i]);
+		}
+	}
+
+	virtual bool Write(LBuff& buff)
+	{
+		buff.Write("m_strUUID");
+		buff.Write(m_gonghuiId);
+		buff.Write(m_playType);
+		buff.Write(m_baseScore);
+		buff.Write(m_roomId);
+		buff.Write(m_roomState);
+		int i = 0;
+		for (i = 0; i < 4; i++)
+		{
+			buff.Write(m_user[i]);
+		}
+
+		for (i = 0; i < 4; i++)
+		{
+			buff.Write(m_score[i]);
+		}
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgL2LMGGonghuiDeskChange();
 	}
 };
 

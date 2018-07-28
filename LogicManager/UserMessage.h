@@ -34,6 +34,7 @@ protected:
 	void	HanderModifyUserState(LMsgL2LMGModifyUserState* msg);
 	void	HanderModifyUserCardNum(LMsgL2LMGModifyCard* msg);
 	void	HanderAddUserPlayCount(LMsgL2LMGAddUserPlayCount* msg);
+	void    HanderGonghuiDeskChange(LMsgL2LMGGonghuiDeskChange* msg);
 
 	//From GateSever
 	void	HanderUserMsg(LMsgG2LUserMsg* msg);

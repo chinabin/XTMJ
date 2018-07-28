@@ -149,6 +149,28 @@ void User::Send(LMsg& msg)
 	gWork.SendMessageToGate(m_gateId, send);
 }
 
+void User::SendToUser(LMsg& msg, Lint userId)
+{
+	LLOG_DEBUG("User::SendToUser msgid=%d, send to user:%d.", msg.m_msgId, userId);
+
+	boost::shared_ptr<CSafeResourceLock<User> > safeUser = gUserManager.getUserbyUserId(userId);
+	if (safeUser && safeUser->isValid())
+	{
+		Lstring unionId = safeUser->getResource()->m_userData.m_unioid;
+
+		if (unionId.empty())
+		{
+			return;
+		}
+
+		LMsgL2GUserMsg send;
+		send.m_strUUID = unionId;
+		send.m_dataBuff = msg.GetSendBuff();
+
+		gWork.SendMessageToGate(m_gateId, send);
+	}
+}
+
 void User::Send(const LBuffPtr& buff)
 {
 	LMsgL2GUserMsg send;
@@ -260,11 +282,20 @@ void User::HanderMsg(LMsg* msg)
 	case MSG_C_2_S_GONGHUI_INFO:
 		HanderGetUserGonghuiInfo((LMsgC2SGonghuiInfo*)msg);
 		break;
-	case MSG_C_2_S_GONGHUI_APPLY:
+	case MSG_C_2_S_GONGHUI_QUERYAPPLYINFO:
+		HanderGetGonghuiApplyInfo((LMsgC2SQueryApplyInfo*)msg);
 		break;
-	case MSG_C_2_S_GONGHUI_CREATEROOM:
+	case MSG_C_2_S_GONGHUI_APPLY:
+		HanderUserGonghuiApply((LMsgC2SGonghuiApply*)msg);
+		break;
+	case MSG_C_2_S_GONGHUI_USEROP:
+		HanderUserGonghuiOp((LMsgC2SGonghuiUserOp*)msg);
+		break;
+	case MSG_C_2_S_GONGHUI_ROOMOP:
+		HanderUserCreateGonghuiRoom((LMsgC2SGonghuiRoomOP*)msg);
 		break;
 	case MSG_C_2_S_GONGHUI_QUERYDESK:
+		HanderUserQueryGonghuiDesk((LMsgC2SQueryGonghuiDesk*)msg);
 		break;
 	case MSG_C_2_S_CREATE_ROOM:
 		HanderUserCreateDesk((LMsgC2SCreateDesk*)msg);
@@ -357,6 +388,193 @@ void User::HanderGetUserGonghuiInfo(LMsgC2SGonghuiInfo* msg)
 	send.m_userId = m_userData.m_id;
 	send.m_gonghui = gUserManager.getUserGonghuiByUserId(send.m_userId);
 	Send(send);
+}
+
+void User::HanderUserGonghuiOp(LMsgC2SGonghuiUserOp* msg)
+{
+	if (NULL == msg)
+	{
+		return;
+	}
+
+	Lint opType = msg->m_opType;
+	Lint gonghuiId = msg->m_gonghuiId;
+	Lint userId = msg->m_userId;
+
+	LLOG_ERROR("HanderUserGonghuiOp, opType=%d, gonghuiId=%d, userId=%d.", opType, gonghuiId, userId);
+
+	LMsgS2CGonghuiOPResult opRet;
+	
+	//1 同意用户加入工会
+	//2 拒绝用户加入工会
+	//3 从工会剔除用户
+	if (1 == opType)
+	{
+		opRet.m_opType = 1;
+		opRet.m_errorCode = gUserManager.gonghuiApplyOp(gonghuiId, userId, true);
+	}
+	else if (2 == opType)
+	{
+		opRet.m_opType = 2;
+		opRet.m_errorCode = gUserManager.gonghuiApplyOp(gonghuiId, userId, false);
+	}
+	else if (3 == opType)
+	{
+		opRet.m_opType = 3;
+		opRet.m_errorCode = gUserManager.delGonghuiUser(gonghuiId, userId);
+	}
+
+	Send(opRet);
+}
+
+void User::HanderGetGonghuiApplyInfo(LMsgC2SQueryApplyInfo* msg)
+{
+	if (NULL == msg)
+	{
+		return;
+	}
+
+	LMsgS2CQueryApplyInfo send;
+	Lint userId = m_userData.m_id;
+	Lint gonghuiId = msg->m_gonghuiId;
+	send.m_gonghuiId = gonghuiId;
+
+	Gonghui gonghui = gUserManager.getGonghuiInfoById(gonghuiId);
+	if (gonghui.m_gonghuiId == 0)
+	{
+		LLOG_ERROR("Error, gonghui:%d does not exist.", gonghuiId);
+		send.m_opResult = 1;
+		Send(send);
+		return;
+	}
+
+	if (gonghui.m_adminUserId != userId)
+	{
+		LLOG_ERROR("Error, current user: %d is not gonghui admin: %d.", userId, gonghui.m_adminUserId);
+		send.m_opResult = 2;
+		Send(send);
+		return;
+	}
+	
+	std::vector<GonghuiUser> gonghuiUser;
+	
+}
+
+void User::HanderUserGonghuiApply(LMsgC2SGonghuiApply* msg)
+{
+	if (NULL == msg)
+	{
+		return;
+	}
+	LMsgS2CGonghuiOPResult opRet;
+	opRet.m_opType = 4;
+
+	Lint userId = m_userData.m_id;
+	Lint gonghuiId = msg->m_gonghuiId;
+
+	Gonghui gonghuiInfo = gUserManager.getGonghuiInfoById(gonghuiId);
+	Lint adminUserId = gonghuiInfo.m_adminUserId;
+	if (0 == adminUserId)
+	{
+		LLOG_ERROR("Error, gonghui: %d does not exist.", gonghuiId);
+		opRet.m_errorCode = -1;
+		Send(opRet);
+		return;
+	}
+
+	Lstring userName = m_userData.m_nike;
+	gUserManager.addGonghuiApply(gonghuiId, userId, userName);
+
+	opRet.m_errorCode = 0;
+	Send(opRet);
+}
+
+void User::HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg)
+{
+	if (NULL == msg)
+	{
+		return;
+	}
+	LMsgS2CGonghuiOPResult opRet;
+	if (msg->m_opType == "add")
+	{
+		opRet.m_opType = 5;
+	}
+	else
+	{
+		opRet.m_opType = 6;
+	}
+
+	Lint gonghuiId = msg->m_gonghuiId;
+	Lint playType = msg->m_playType; 
+	if (playType != 407 && playType != 408)
+	{
+		LLOG_ERROR("Error, playType: %d is invalid.", playType);
+		opRet.m_errorCode = -3;
+		Send(opRet);
+		return;
+	}
+	Lint baseScoreType = msg->m_baseScoreType; 
+	if (baseScoreType != 400 && baseScoreType == 401 && baseScoreType == 402)
+	{
+		LLOG_ERROR("Error, baseScoreType: %s is invalid.", baseScoreType);
+		opRet.m_errorCode = -3;
+		Send(opRet);
+		return;
+	}
+
+	Lint roomType = msg->m_roomType;
+	if (roomType != 1 && roomType != 2 && roomType != 3)
+	{
+		LLOG_ERROR("Error, roomType: %s is invalid.", roomType);
+		opRet.m_errorCode = -3;
+		Send(opRet);
+		return;
+	}
+
+	Lint roomNumber = msg->m_roomNumber;
+	if (roomNumber <= 0)
+	{
+		LLOG_ERROR("Error, roomNumber: %s is invalid.", roomNumber);
+		opRet.m_errorCode = -3;
+		Send(opRet);
+		return;
+	}
+
+	std::stringstream ss;
+	ss << playType << "," << baseScoreType << "," << roomType << "," << roomNumber;
+	Lstring roomPolicy = ss.str();
+	LLOG_ERROR("HanderUserCreateGonghuiRoom, msgId=%d, roomPolicy=%s.", msg->m_msgId, roomPolicy.c_str());
+	
+	if (msg->m_opType == "add")
+	{
+		gUserManager.updateGonghuiRoomPolicy(msg->m_gonghuiId, roomPolicy, true);
+
+		for (Lint i = 0; i < roomNumber; i++)
+		{
+			if (!gWork.CreateGonghuiRoom(gonghuiId, roomType, playType, baseScoreType))
+			{
+				opRet.m_errorCode = -4;
+				Send(opRet);
+				return;
+			}
+		}
+	}
+	else
+	{
+		gUserManager.updateGonghuiRoomPolicy(msg->m_gonghuiId, roomPolicy, false);
+	}
+
+	opRet.m_errorCode = 0;
+	Send(opRet);
+}
+
+void User::HanderUserQueryGonghuiDesk(LMsgC2SQueryGonghuiDesk* msg)
+{
+	if (NULL == msg)
+	{
+		return;
+	}
 }
 
 void User::HanderUserCreateDesk(LMsgC2SCreateDesk* msg)

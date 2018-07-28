@@ -27,6 +27,7 @@ public:
 	void	Logout();
 
 	void	Send(LMsg& msg);
+	void    SendToUser(LMsg& msg, Lint userId);
 	void	Send(const LBuffPtr& buff);
 
 	void	SendLoginInfo(Lint lastLoginTime);
@@ -42,9 +43,11 @@ public:
 	void	HanderMsg(LMsg* msg);
 
 	void    HanderGetUserGonghuiInfo(LMsgC2SGonghuiInfo* msg);
-	void    HanderUserGonghuiApply();
-	void    HanderUserCreateGonghuiRoom();
-	void    HanderUserQueryGonghuiDesk();
+	void    HanderGetGonghuiApplyInfo(LMsgC2SQueryApplyInfo* msg);
+	void    HanderUserGonghuiApply(LMsgC2SGonghuiApply* msg);
+	void    HanderUserGonghuiOp(LMsgC2SGonghuiUserOp* msg);
+	void    HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg);
+	void    HanderUserQueryGonghuiDesk(LMsgC2SQueryGonghuiDesk* msg);
 
 	//玩家创建房间
 	void	HanderUserCreateDesk(LMsgC2SCreateDesk* msg);

@@ -1317,6 +1317,7 @@ void Desk::_clearData()
 	m_deskType = DeskType_Common;
 	m_gameType = 0;
 	m_cardType = 0;
+	m_gonghuiId = 0;
 }
 
 bool Desk::_createRegister(GameType gameType)

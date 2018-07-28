@@ -228,9 +228,15 @@ bool LMsgFactory::Init()
 	RegestMsg(new LMsgC2SGonghuiInfo());
 	RegestMsg(new LMsgS2CGonghuiInfo());
 	RegestMsg(new LMsgC2SGonghuiApply());
+	RegestMsg(new LMsgS2CGonghuiOPResult());
 	RegestMsg(new LMsgC2SQueryGonghuiDesk());
-	RegestMsg(new LMsgC2SCreateGonghuiRoom());
+	RegestMsg(new LMsgC2SGonghuiRoomOP());
 	RegestMsg(new LMsgLMG2LCreateGonghuiDesk());
+	RegestMsg(new LMsgS2CGonghuiDeskChange());
+	RegestMsg(new LMsgL2LMGGonghuiDeskChange());
+	RegestMsg(new LMsgC2SGonghuiUserOp());
+	RegestMsg(new LMsgS2CQueryApplyInfo());
+	RegestMsg(new LMsgC2SQueryApplyInfo());
 
 	RegestMsg(new LMsgG2LLogin());
 	RegestMsg(new LMsgG2LUserMsg());

@@ -37,6 +37,18 @@ void UserManager::delUser(Lint iUserId)
 	}
 }
 
+Lstring UserManager::getUserNameById(Lint iUserId)
+{
+	auto itUser = m_mapUserBaseInfo.find(iUserId);
+	if (itUser != m_mapUserBaseInfo.end())
+	{
+		LLOG_ERROR("Find user, user id=%d, nike=%s.", iUserId, itUser->second->m_nike.c_str());
+		return itUser->second->m_nike;
+	}
+	LLOG_ERROR("cannot find user, user id=%d", iUserId);
+	return "";
+}
+
 boost::shared_ptr<CSafeResourceLock<User> > UserManager::getUserByGateIdAndUUID(Lint iGateId, const Lstring& strUUID)
 {
 	boost::shared_ptr<User> user;
@@ -199,6 +211,17 @@ void UserManager::delUserLoginInfo(Lint iUserId)
 	m_mapUserLoginInfo.erase(iUserId);
 }
 
+std::vector<GonghuiUser> UserManager::getGonghuiUserInfoById(Lint gonghuiId)
+{
+	std::vector<GonghuiUser> userVector;
+	std::map<Lint, Gonghui>::iterator iter = m_gonghuiInfo.find(gonghuiId);
+	if (iter != m_gonghuiInfo.end())
+	{
+		userVector = iter->second.m_userInfo;
+	}
+	return userVector;
+}
+
 std::vector<Gonghui> UserManager::getGonghuiInfo()
 {
 	std::vector<Gonghui> tmpGonghuiInfo;
@@ -212,12 +235,79 @@ std::vector<Gonghui> UserManager::getGonghuiInfo()
 	return tmpGonghuiInfo;
 }
 
+Gonghui UserManager::getGonghuiInfoById(Lint gonghuiId)
+{
+	Gonghui gonghui;
+	std::map<Lint, Gonghui>::iterator iter = m_gonghuiInfo.find(gonghuiId);
+	if (iter != m_gonghuiInfo.end())
+	{
+		gonghui = iter->second;
+	}
+	return gonghui;
+}
+
 void UserManager::setGonghuiInfo(std::vector<Gonghui> gonghuiInfo)
 {
 	for (Gonghui gonghui : gonghuiInfo)
 	{
 		m_gonghuiInfo[gonghui.m_gonghuiId] = gonghui;
 	}
+}
+
+void UserManager::updateGonghuiPaiju(Lint gonghuiId, Lint roomId, Lstring roomState, Lstring user[4])
+{
+	LLOG_ERROR("update paiju, gonghuiId:%d, roomState=%s, roomId=%d, user=%s,%s,%s,%s.", gonghuiId, roomState.c_str(), roomId, user[0].c_str(), user[1].c_str(), user[2].c_str(), user[3].c_str());
+
+	std::map<Lint, Gonghui>::iterator iter = m_gonghuiInfo.find(gonghuiId);
+	if (iter != m_gonghuiInfo.end())
+	{
+		std::vector<PaiJuInfo> paijuInfo = iter->second.m_paijuInfo;
+
+		std::vector<PaiJuInfo>::iterator paijuIter = paijuInfo.begin();
+		for (; paijuIter != paijuInfo.end(); )
+		{
+			if (paijuIter->m_roomId == roomId)
+			{
+				paijuIter->m_roomState = roomState;
+				paijuIter->m_user1 = user[1];
+				paijuIter->m_user2 = user[2];
+				paijuIter->m_user3 = user[3];
+				paijuIter->m_user4 = user[4];
+				break;
+			}
+			++paijuIter;
+		}
+	}
+}
+
+Lint UserManager::delGonghuiPaiju(Lint gonghuiId, Lint roomId)
+{
+	LLOG_ERROR("delete paiju, gonghuiId:%d, roomId=%d.", gonghuiId, roomId);
+	std::map<Lint, Gonghui>::iterator iter = m_gonghuiInfo.find(gonghuiId);
+
+	Lint roomCounts = 0;
+	if (iter != m_gonghuiInfo.end())
+	{
+		std::vector<PaiJuInfo> paijuInfo = iter->second.m_paijuInfo;
+		
+		std::vector<PaiJuInfo>::iterator paijuIter = paijuInfo.begin();
+		for (; paijuIter != paijuInfo.end(); )
+		{
+			if (paijuIter->m_roomId == roomId)
+			{
+				paijuIter = paijuInfo.erase(paijuIter);
+				iter->second.m_paijuCount--;
+				roomCounts = paijuIter->m_roomCounts;
+			}
+			else
+			{
+				++paijuIter;
+			}
+		}
+		iter->second.m_paijuInfo = paijuInfo;
+	}
+
+	return roomCounts;
 }
 
 void UserManager::addGonghuiPaiju(Lint gonghuiId, PaiJuInfo paijuInfo)
@@ -229,6 +319,25 @@ void UserManager::addGonghuiPaiju(Lint gonghuiId, PaiJuInfo paijuInfo)
 	{
 		iter->second.m_paijuInfo.push_back(paijuInfo);
 		iter->second.m_paijuCount = iter->second.m_paijuCount + 1;
+	}
+}
+
+void UserManager::addGonghuiApply(Lint gonghuiId, Lint userId, Lstring userName)
+{
+	LLOG_ERROR("add gonghui apply, gonghuiId=%d, userId=%d, userName=%s.", gonghuiId, userId, userName.c_str());
+	
+	std::map<Lint, std::set<Lint>>::iterator iter = m_gonghuiApplyInfo.find(gonghuiId);
+	if (iter != m_gonghuiApplyInfo.end())
+	{
+		std::set<Lint> x = iter->second;
+		x.insert(userId);
+		iter->second = x;
+	}
+	else
+	{
+		std::set<Lint> x;
+		x.insert(userId);
+		m_gonghuiApplyInfo.insert(std::map<Lint, std::set<Lint>>::value_type(gonghuiId, x));
 	}
 }
 
@@ -280,4 +389,180 @@ boost::shared_ptr<CSafeResourceLock<UserLoginInfo> > UserManager::getUserLoginIn
 	}
 
 	return safeLoginInfo;
+}
+
+std::vector<GonghuiUser> UserManager::getGonghuiApplyUser(Lint gonghuiId)
+{
+	std::vector<GonghuiUser> applyUser;
+	std::map<Lint, std::set<Lint>>::iterator iter = m_gonghuiApplyInfo.find(gonghuiId);
+	if (iter == m_gonghuiApplyInfo.end())
+	{
+		LLOG_ERROR("Error, gonghui: %d no apply user.", gonghuiId);
+		return applyUser;
+	}
+
+	std::set<Lint> applyUserList = iter->second;
+
+	for (Lint userId : applyUserList)
+	{
+		GonghuiUser user;
+		user.id = userId;
+		user.name = getUserNameById(userId);
+		LLOG_ERROR("Get gonghui apply user, userId:%d, userName:%s.", userId, user.name.c_str());
+		applyUser.push_back(user);
+	}
+	
+	return applyUser;
+}
+
+Lint UserManager::gonghuiApplyOp(Lint gonghuiId, Lint userId, bool opResult)
+{
+	std::map<Lint, std::set<Lint>>::iterator iter = m_gonghuiApplyInfo.find(gonghuiId);
+	if (iter == m_gonghuiApplyInfo.end())
+	{
+		LLOG_ERROR("Error, gonghui: %d does not exist.", gonghuiId);
+		return -1;
+	}
+
+	std::set<Lint> applyUserList = iter->second;
+	
+	std::set<Lint>::iterator setIter = applyUserList.find(userId);
+	if (setIter == applyUserList.end())
+	{
+		LLOG_ERROR("Error, user:%d does not apply to add gonghui: %d.", userId, gonghuiId);
+		return -2;
+	}
+
+	// 不管是同意还是不同意，都删除掉申请记录中的数据
+	applyUserList.erase(setIter);
+	iter->second = applyUserList;
+
+	// TODO 增加对应的数据库操作
+	if (opResult)
+	{
+		// 用户加入工会
+		return addGonghuiUser(gonghuiId, userId);
+	}
+	else
+	{
+		// 不同意用户加入工会，需要更新删除数据库中的申请记录
+	}
+
+	return 0;
+}
+
+Lint UserManager::addGonghuiUser(Lint gonghuiId, Lint userId)
+{
+	std::vector<GonghuiUser> userVector;
+	std::map<Lint, Gonghui>::iterator iter = m_gonghuiInfo.find(gonghuiId);
+	if (iter == m_gonghuiInfo.end())
+	{
+		LLOG_ERROR("Error, gonghui: %d does not exist.", gonghuiId);
+		return -1;
+	}
+
+	userVector = iter->second.m_userInfo;
+
+	GonghuiUser user;
+	user.id = userId;
+	user.name = getUserNameById(userId);
+	userVector.push_back(user);
+	iter->second.m_userInfo = userVector;
+
+	// TODO 带补充数据库中新增用户的处理逻辑
+
+	return 0;
+}
+
+Lint UserManager::delGonghuiUser(Lint gonghuiId, Lint userId)
+{
+	std::vector<GonghuiUser> userVector;
+	std::map<Lint, Gonghui>::iterator iter = m_gonghuiInfo.find(gonghuiId);
+	if (iter == m_gonghuiInfo.end())
+	{
+		LLOG_ERROR("Error, gonghui: %d does not exist.", gonghuiId);
+		return -1;
+	}
+
+	userVector = iter->second.m_userInfo;
+
+	bool find = false;
+	std::vector<GonghuiUser>::iterator userIter = userVector.begin();
+	for (; userIter != userVector.end(); ++userIter)
+	{
+		if (userIter->id == userId)
+		{
+			find = true;
+			userVector.erase(userIter);
+			break;
+		}
+	}
+
+	LLOG_ERROR("find user=%d.", find);
+	if (find)
+	{
+		iter->second.m_userInfo = userVector;
+		iter->second.m_userCount--;
+
+		// TODO 待补充数据库中删除工会用户的逻辑
+	}
+	return 0;
+}
+
+void UserManager::SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c)
+{
+	std::string::size_type pos1, pos2;
+	pos2 = s.find(c);
+	pos1 = 0;
+	while (std::string::npos != pos2)
+	{
+		v.push_back(s.substr(pos1, pos2 - pos1));
+
+		pos1 = pos2 + c.size();
+		pos2 = s.find(c, pos1);
+	}
+	if (pos1 != s.length())
+		v.push_back(s.substr(pos1));
+}
+
+std::string& UserManager::replace_all_distinct(std::string& str, const std::string& old_value, const std::string& new_value)
+{
+	for (std::string::size_type pos = 0; pos != std::string::npos; pos += new_value.length())
+	{
+		if ((pos = str.find(old_value, pos)) != std::string::npos)
+		{
+			str.replace(pos, old_value.length(), new_value);
+		}
+		else
+		{
+			break;
+		}
+	}
+	return   str;
+}
+
+Lint UserManager::updateGonghuiRoomPolicy(Lint gonghuiId, Lstring roomPolicy, bool isAdd)
+{
+	std::map<Lint, Gonghui>::iterator iter = m_gonghuiInfo.find(gonghuiId);
+	if (iter == m_gonghuiInfo.end())
+	{
+		LLOG_ERROR("Error, gonghui: %d does not exist.", gonghuiId);
+		return -1;
+	}
+
+	Lstring curPolicy = iter->second.m_roomPolicy;
+	Lstring newPolicy;
+	
+	if (isAdd)
+	{
+		newPolicy = (curPolicy[curPolicy.length() - 1] == ';') ? (curPolicy + roomPolicy) : (curPolicy + ";" + roomPolicy);
+	}
+	else
+	{
+		newPolicy = replace_all_distinct(curPolicy, roomPolicy, "");
+	}
+	iter->second.m_roomPolicy = newPolicy;
+
+	// TODO 检测policy的合法性，并且调用创建工会房间的接口，创建房间
+	// TODO 待补充数据库入库信息
 }

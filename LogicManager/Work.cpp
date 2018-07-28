@@ -245,6 +245,15 @@ void Work::Push(void* msg)
 			}
 			break;
 		}
+	case MSG_L_2_LMG_GONGHUIDESK_CHANGE:
+		{
+			LMsgL2LMGGonghuiDeskChange* pGonghuiDeskChangeMsg = (LMsgL2LMGGonghuiDeskChange*)pMessage;
+			if (pGonghuiDeskChangeMsg)
+			{
+				gUserMessageMsg.handlerMessage(pGonghuiDeskChangeMsg->m_strUUID, pGonghuiDeskChangeMsg);
+			}
+			break;
+		}
 
 	/*
 	DB to LogicManager
@@ -632,6 +641,41 @@ void Work::SendToCenter(LMsg& msg)
 	}
 }
 
+bool Work::CreateGonghuiRoom(Lint gonghuiId, Lint roomType, Lint playType, Lint baseScoreType)
+{
+	Gonghui gonghui = gUserManager.getGonghuiInfoById(gonghuiId);
+	if (gonghui.m_gonghuiId == 0)
+	{
+		return false;
+	}
+	LMsgLMG2LCreateGonghuiDesk send;
+	send.m_userId = gonghui.m_adminUserId;
+	send.m_gonghuiId = gonghui.m_gonghuiId;
+	send.m_playType = playType;
+	send.m_baseScore = baseScoreType;
+	send.m_roomType = roomType;
+
+	Lstring ipAddr = "127.0.0.1";
+	Lint roomId = gDeskManager.GetFreeDeskId(gonghui.m_adminUserId, 1001, 0, send.m_roomType, 16, ipAddr);
+	send.m_deskId = roomId;
+	// 此处暂时和LogicServer的id保持一致
+	SendMessageToAllLogic(send);
+
+	PaiJuInfo paijuInfo;
+	paijuInfo.m_roomId = roomId;
+	paijuInfo.m_roomCounts = roomType;
+	paijuInfo.m_roomType = send.m_playType;
+	paijuInfo.m_roomScore = send.m_baseScore;
+	paijuInfo.m_roomState = "IDLE";
+	paijuInfo.m_user1 = "";
+	paijuInfo.m_user2 = "";
+	paijuInfo.m_user3 = "";
+	paijuInfo.m_user4 = "";
+	gUserManager.addGonghuiPaiju(gonghui.m_gonghuiId, paijuInfo);
+
+	return true;
+}
+
 void Work::PrintGonghuiInfo(std::vector<Gonghui> gonghuiInfo)
 {
 	for (Gonghui gonghui : gonghuiInfo)
@@ -650,47 +694,30 @@ void Work::PrintGonghuiInfo(std::vector<Gonghui> gonghuiInfo)
 			continue;
 		}
 		std::vector<std::string> roomPolicyVec;
-		SplitString(roomPolicy, roomPolicyVec, ",");
+		SplitString(roomPolicy, roomPolicyVec, ";");
 		LLOG_DEBUG("vec size = %d.", roomPolicyVec.size());
 		for (std::string str : roomPolicyVec)
 		{
 			LLOG_DEBUG("value=%s.", str.c_str());
 		}
-		if (roomPolicyVec.size() != 4)
+
+		for (std::string policy : roomPolicyVec)
 		{
-			LLOG_ERROR("Error, roomPolicy: %s is invalid.", roomPolicy.c_str());
-			continue;
+			std::vector<std::string> policyVec;
+			SplitString(policy, policyVec, ",");
+			if (policyVec.size() != 4)
+			{
+				LLOG_ERROR("Error, roomPolicy: %s is invalid.", roomPolicy.c_str());
+				continue;
+			}
+
+			Lint roomCount = stoi(policyVec[3]);
+			for (Lint i = 0; i < roomCount; i++)
+			{
+				CreateGonghuiRoom(gonghui.m_gonghuiId, stoi(policyVec[2]), stoi(policyVec[0]), stoi(policyVec[1]));
+			}
 		}
-
-		Lint roomCount = stoi(roomPolicyVec[3]);
-		for (Lint i = 0; i < roomCount; i++)
-		{
-			LMsgLMG2LCreateGonghuiDesk send;
-			send.m_userId = gonghui.m_adminUserId;
-
-			send.m_gonghuiId = gonghui.m_gonghuiId;
-			send.m_playType = roomPolicyVec[0];
-			send.m_baseScore = stoi(roomPolicyVec[1]);
-			send.m_roomType = stoi(roomPolicyVec[2]);
-
-			Lstring ipAddr = "127.0.0.1";
-			Lint roomId = gDeskManager.GetFreeDeskId(gonghui.m_adminUserId, 1001, 0, send.m_roomType, 16, ipAddr);
-			send.m_deskId = roomId;
-			// 此处暂时和LogicServer的id保持一致
-			SendMessageToAllLogic(send);
-
-			PaiJuInfo paijuInfo;
-			paijuInfo.m_roomId = roomId;
-			paijuInfo.m_roomCounts = roomCount;
-			paijuInfo.m_roomType = send.m_playType;
-			paijuInfo.m_roomScore = send.m_baseScore;
-			paijuInfo.m_roomState = "IDLE";
-			paijuInfo.m_user1 = "";
-			paijuInfo.m_user2 = "";
-			paijuInfo.m_user3 = "";
-			paijuInfo.m_user4 = "";
-			gUserManager.addGonghuiPaiju(gonghui.m_gonghuiId, paijuInfo);
-		}
+		
 	}
 }
 

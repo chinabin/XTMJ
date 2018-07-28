@@ -719,7 +719,7 @@ Desk* RoomVip::GetDeskById(Lint id)
 
 Lint RoomVip::CreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* pMsg, User* pUser)
 {
-	int circle = pMsg->m_roomType;
+	int circle = GetCircle(16, pMsg->m_roomType);
 	if (GetDeskById(pMsg->m_deskId) != NULL)
 	{
 		LLOG_ERROR("Error, deskId already in use.");
@@ -727,8 +727,23 @@ Lint RoomVip::CreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* pMsg, User* pUser)
 	}
 
 	Desk* desk = GetFreeDesk(pMsg->m_deskId, GameType::MJWuHanXianTao, pMsg->m_roomType);
-	desk->SetPlayerCapacity(stoi(pMsg->m_playType));
-	desk->m_baseScore = pMsg->m_baseScore;
+	desk->SetPlayerCapacity(4);
+	if (pMsg->m_playType == 407)
+	{
+		desk->SetPlayerCapacity(3);
+	}
+
+	desk->m_baseScore = 1;
+	if (pMsg->m_baseScore == 401)
+	{
+		desk->m_baseScore = 2;
+	}
+	else if (pMsg->m_baseScore == 402)
+	{
+		desk->m_baseScore = 4;
+	}
+
+	desk->setDeskGonghuiId(pMsg->m_gonghuiId);
 
 	LLOG_INFO("RoomVip::CreateGonghuiDesk userid=%d deskid=%d gametype=%d, userCount=%d.", pMsg->m_userId, pMsg->m_deskId, 16, desk->GetPlayerCapacity());
 	//////////////////////////////////////////////////////////////////////////
@@ -960,11 +975,33 @@ Lint RoomVip::AddToVipDesk(User* pUser, Lint nDeskID)
 		pUser->Send(ret);
 		return ret.m_errorCode;
 	}
-
+	
 	LLOG_INFO("RoomVip::AddToVipDesk userid=%d deskid=%d deskusercount=%d", pUser->GetUserDataId(), nDeskID, desk->GetUserCount());
 	desk->OnUserInRoom(pUser);
 
 	pUser->Send(ret);
+
+	if (0 != desk->getDeskGonghuiId())
+	{
+		// 玩家进入工会房间，需要广播，同时更新LogicManager中的缓存
+		LMsgL2LMGGonghuiDeskChange tmpMsg;
+		tmpMsg.m_roomId = nDeskID;
+		tmpMsg.m_gonghuiId = desk->getDeskGonghuiId();
+		tmpMsg.m_roomState = desk->getDeskState();
+		tmpMsg.m_playType = desk->GetPlayerCapacity();
+		tmpMsg.m_baseScore = desk->getBaseScore();
+		
+		for (Lint x = 0; x < DESK_USER_COUNT; x++)
+		{
+			if (NULL != desk->m_user[x])
+			{
+				tmpMsg.m_user[x] = desk->m_user[x]->GetUserDataId();
+			}
+		}
+
+		gWork.SendToLogicManager(tmpMsg);
+	}
+
 	return ret.m_errorCode;
 }
 

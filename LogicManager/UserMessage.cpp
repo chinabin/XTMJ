@@ -117,6 +117,9 @@ void CUserMessage::HanderMsg(LMsg* msg)
 	case MSG_L_2_LMG_ADD_USER_PLAYCOUNT:
 		HanderAddUserPlayCount((LMsgL2LMGAddUserPlayCount*)msg);
 		break;
+	case MSG_L_2_LMG_GONGHUIDESK_CHANGE:
+		HanderGonghuiDeskChange((LMsgL2LMGGonghuiDeskChange*)msg);
+		break;
 
 	/*
 	Gate to LogicManager
@@ -232,6 +235,63 @@ void CUserMessage::HanderCenterAddAgent(LMsgCE2LMGAddAgent* msg)
 	ret.m_inviter.m_id = msg->m_agentId;
 
 	user->Send(ret);
+}
+
+void CUserMessage::HanderGonghuiDeskChange(LMsgL2LMGGonghuiDeskChange* msg)
+{
+	if (msg == NULL)
+	{
+		return;
+	}
+
+	LMsgS2CGonghuiDeskChange cMsg;
+	cMsg.m_gonghuiId = msg->m_gonghuiId;
+	cMsg.m_roomId = msg->m_roomId;
+	cMsg.m_playType = msg->m_playType;
+	cMsg.m_baseScore = msg->m_baseScore;
+	cMsg.m_roomState = msg->m_roomState;
+	for (int i = 0; i < 4; i++)
+	{
+		Lint tmpUserId = msg->m_user[i];
+		if (0 != tmpUserId)
+		{
+			cMsg.m_user[i] = gUserManager.getUserNameById(tmpUserId);
+		}
+
+		cMsg.m_score[i] = msg->m_score[i];
+	}
+	
+	std::vector<GonghuiUser> gonghuiUsers = gUserManager.getGonghuiUserInfoById(msg->m_gonghuiId);
+	
+	for (GonghuiUser tmpUser : gonghuiUsers)
+	{
+		// 这里发送消息到所有工会的已登录的用户客户端上，同时更新工会缓存信息
+		boost::shared_ptr<CSafeResourceLock<User> > safeUser = gUserManager.getUserbyUserId(tmpUser.id);
+		if (safeUser.get() == NULL || !safeUser->isValid())
+		{
+			return;
+		}
+
+		// 发送的消息需要转换为其他
+		boost::shared_ptr<User> user = safeUser->getResource();
+		user->Send(msg->GetSendBuff());
+	}
+
+	if (msg->m_roomState == DESK_PLAY)
+	{
+		Lint roomCounts = gUserManager.delGonghuiPaiju(msg->m_gonghuiId, msg->m_roomId);
+		
+		// TODO 创建工会房间
+		gWork.CreateGonghuiRoom(msg->m_gonghuiId, roomCounts, msg->m_playType, msg->m_baseScore);
+	}
+	else if (msg->m_roomState == DESK_WAIT)
+	{
+		gUserManager.updateGonghuiPaiju(msg->m_gonghuiId, msg->m_roomId, std::to_string(msg->m_roomState), cMsg.m_user);
+	}
+	else
+	{
+		// TODO 其他类型默认为房间结算，此处需要考虑记录score分数
+	}
 }
 
 void CUserMessage::HanderModifyUserState(LMsgL2LMGModifyUserState* msg)

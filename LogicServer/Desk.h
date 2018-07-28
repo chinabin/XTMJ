@@ -209,6 +209,25 @@ public:
 	void UpdateLastOptTimeAndPos(User* user);
 	// Add HuNanZhuanZhuan by hanlu 02242017 End
 
+	inline void setDeskGonghuiId(Lint gonghuiId)
+	{
+		m_gonghuiId = gonghuiId;
+	}
+
+	inline Lint getDeskGonghuiId()
+	{
+		return m_gonghuiId;
+	}
+
+	inline Lint getBaseScore()
+	{
+		return m_baseScore;
+	}
+
+	inline Lint getDeskPlayers()
+	{
+		return m_iPlayerCapacity;
+	}
 protected:
 	void			_clearData();
 	bool			_createRegister(GameType gameType);
@@ -253,6 +272,7 @@ private:
 	DeskType		m_deskType;
 	Lint			m_gameType;						// 商丘麻将 周口麻将 等等
 	Lint			m_cardType;						// 4局 8局 等等
+	Lint            m_gonghuiId;                    // 工会id
 };
 
 typedef std::map<DWORD,Desk*> DeskMap;
