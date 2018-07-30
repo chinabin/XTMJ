@@ -198,7 +198,7 @@ void User::SendLoginInfo(Lint lastLoginTime)
 	send.m_inviterId = m_userData.m_agentId;
 	if(m_userData.m_new == 0)
 	{
-		const int INIT_CARD_NUM_NEW = 8;			// 新的送6张
+		const int INIT_CARD_NUM_NEW = 20;			// 新的送6张
 		// 新手送卡
 		send.m_card1 = 0;
 		send.m_card2 = INIT_CARD_NUM_NEW;
@@ -456,8 +456,9 @@ void User::HanderGetGonghuiApplyInfo(LMsgC2SQueryApplyInfo* msg)
 		return;
 	}
 	
-	std::vector<GonghuiUser> gonghuiUser;
-	
+	std::vector<GonghuiUser> gonghuiUser = gUserManager.getGonghuiApplyUser(gonghuiId);
+	send.m_gonghuiUser = gonghuiUser;
+	Send(send);
 }
 
 void User::HanderUserGonghuiApply(LMsgC2SGonghuiApply* msg)
@@ -482,8 +483,19 @@ void User::HanderUserGonghuiApply(LMsgC2SGonghuiApply* msg)
 		return;
 	}
 
-	Lstring userName = m_userData.m_nike;
-	gUserManager.addGonghuiApply(gonghuiId, userId, userName);
+	std::vector<GonghuiUser> userList = gonghuiInfo.m_userInfo;
+	for (GonghuiUser tmpUser : userList)
+	{
+		if (tmpUser.id == userId)
+		{
+			LLOG_ERROR("Error, user %d had alreay in gonghui: %d.", userId, gonghuiId);
+			opRet.m_errorCode = -6;
+			Send(opRet);
+			return;
+		}
+	}
+	
+	gUserManager.addGonghuiApply(gonghuiId, userId);
 
 	opRet.m_errorCode = 0;
 	Send(opRet);
@@ -549,6 +561,18 @@ void User::HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg)
 	if (msg->m_opType == "add")
 	{
 		gUserManager.updateGonghuiRoomPolicy(msg->m_gonghuiId, roomPolicy, true);
+
+		Lint count;
+		NeedCardCount(roomType, count);
+
+		Lint needCardNumber = roomNumber * count;
+		if (m_userData.m_numOfCard2s < needCardNumber)
+		{
+			LLOG_ERROR("Error, user's card number is not enough, %d,%d.", m_userData.m_numOfCard2s, needCardNumber);
+			opRet.m_errorCode = -5;
+			Send(opRet);
+			return;
+		}
 
 		for (Lint i = 0; i < roomNumber; i++)
 		{
@@ -664,7 +688,7 @@ void User::HanderUserCreateDesk(LMsgC2SCreateDesk* msg)
 	}
 	Lstring createIp = limitIp? GetIp() : "";
 
-	send.m_deskID = gDeskManager.GetFreeDeskId(m_userData.m_id, iLogicServerId, nCreditLimit, cardType, gameType, createIp);
+	send.m_deskID = gDeskManager.GetFreeDeskId(m_userData.m_id, iLogicServerId, nCreditLimit, cardType, gameType, createIp, 0);
 
 	gWork.SendMessageToLogic(iLogicServerId, send);
 
@@ -680,6 +704,9 @@ void User::HanderUserAddDesk(LMsgC2SAddDesk* msg)
 		return;
 	}
 
+	LLOG_INFO("User::HanderUserAddDesk userid=%d deskid=%d", m_userData.m_id, msg->m_deskId);
+
+
 	DeskInfos info = gDeskManager.GetDeskInfo(msg->m_deskId);
 	if(!info)
 	{
@@ -690,6 +717,21 @@ void User::HanderUserAddDesk(LMsgC2SAddDesk* msg)
 
 		LLOG_ERROR("ERROR: User::HanderUserAddDesk desk Not Exist, userid=%d", m_userData.m_id);
 		return;
+	}
+
+	if (info.m_gonghuiId != 0)
+	{
+		bool checkUser = gUserManager.isUserInGonghui(info.m_gonghuiId, m_userData.m_id);
+		if (!checkUser)
+		{
+			LMsgS2CAddDeskRet ret;
+			ret.m_deskId = msg->m_deskId;
+			ret.m_errorCode = 7;
+			Send(ret);
+
+			LLOG_ERROR("ERROR: User::HanderUserAddDesk user does not in gonhui, userid=%d, gonghuiId=%d.", m_userData.m_id, info.m_gonghuiId);
+			return;
+		}
 	}
 
 	//Lint limit = gDeskManager.GetDeskCreditLimit(msg->m_deskId);
@@ -733,10 +775,6 @@ void User::HanderUserAddDesk(LMsgC2SAddDesk* msg)
 		LLOG_ERROR("ERROR: User::HanderUserAddDesk cardType=%d gameType=%d userid=%d", info.m_cardType, info.m_gameType, m_userData.m_id);
 		return;
 	}
-
-
-	LLOG_INFO("User::HanderUserAddDesk userid=%d deskid=%d", m_userData.m_id, msg->m_deskId);
-
 
 	Lint iLogicServerId = getUserLogicID();
 	if(!gWork.isLogicServerExist(iLogicServerId))

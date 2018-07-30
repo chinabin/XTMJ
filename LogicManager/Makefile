@@ -29,6 +29,7 @@ BASE_SRC = ../LBase/LActive.o \
   	    ../LBase/BaseCommonFunc.o \
 	    ../LBase/IPFilter.o \
 	    ../LBase/LMemeoryRecycle.o \
+	    ../LBase/LDBSession.o \
 		../LBase/RLogHttp.o \
 
 BASE_LIBS = ./libs/LActive.o \

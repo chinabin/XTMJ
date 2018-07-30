@@ -40,9 +40,21 @@ public:
 	Lstring GetRemoteLogUrl();
 	Lint GetMaxCachedLogSize();
 	Lshort GetMaxCachedLogNum();
+	
+	Lstring GetLogicDBIp();
+	Lshort	GetLogicDBPort();
+	Lstring GetLogicDBKey();
+
+	Lstring GetRedisIp();
+	Lshort	GetRedisPort();
+
+	Lstring	GetDbHost();
+	Lstring	GetDbUser();
+	Lstring	GetDbPass();
+	Lstring	GetDbName();
+	Lshort	GetDbPort();
 private:
 	LIniConfig	m_ini;
-private:
 	Lshort		m_inPort;
 	Lshort		m_outPort;
 

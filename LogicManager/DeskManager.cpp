@@ -53,7 +53,7 @@ Lint DeskManager::RecycleDeskId(Lint iDeskId)
 	return iLogicServerId;
 }
 
-Lint DeskManager::GetFreeDeskId(Lint uid, Lint nServerID, Lint nInCredits, Lint cardType, Lint gameType, Lstring ip)
+Lint DeskManager::GetFreeDeskId(Lint uid, Lint nServerID, Lint nInCredits, Lint cardType, Lint gameType, Lstring ip, Lint gonghuiId)
 {
 	boost::mutex::scoped_lock l(m_mutexDeskId);
 
@@ -66,6 +66,10 @@ Lint DeskManager::GetFreeDeskId(Lint uid, Lint nServerID, Lint nInCredits, Lint 
 		id = m_FreeDeskList.front();
 		m_FreeDeskList.pop();
 		DeskInfos tDesk(uid, nServerID, nInCredits, cardType, gameType, ip);
+		if (0 != gonghuiId)
+		{
+			tDesk.m_gonghuiId = gonghuiId;
+		}
 		m_mapDeskId2LogicServerId[id] = tDesk;
 	}
 

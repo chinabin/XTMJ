@@ -1685,8 +1685,9 @@ struct LMsgL2LMGGonghuiDeskChange : public LMsg
 {
 	Lstring m_strUUID;	 //玩家uuid
 	Lint m_gonghuiId;  // 工会ID
-	Lint m_playType;
-	Lint m_baseScore;
+	Lint m_playType;   // 几人麻将
+	Lint m_baseScore;  // 底分类型
+	Lint m_roomType;   // 房间类型，多少局
 	Lint m_roomId;     // 工会房间ID
 	Lint m_roomState;  // 工会房间状态，为0表示空闲，1表示准备（新用户加入房间），2表示Playing，3表示结束
 	Lint m_user[4]; // 进入房间的用户，当roomState为2时使用，更新数据库数据
@@ -1699,6 +1700,7 @@ struct LMsgL2LMGGonghuiDeskChange : public LMsg
 		m_playType = 0;
 		m_roomState = 0;
 		m_baseScore = 0;
+		m_roomType = 0;
 		for (int i = 0; i < 4; i++)
 		{
 			m_user[i] = 0;
@@ -1712,6 +1714,7 @@ struct LMsgL2LMGGonghuiDeskChange : public LMsg
 		buff.Read(m_gonghuiId);
 		buff.Read(m_playType);
 		buff.Read(m_baseScore);
+		buff.Read(m_roomType);
 		buff.Read(m_roomId);
 		buff.Read(m_roomState);
 		int i = 0;
@@ -1724,14 +1727,16 @@ struct LMsgL2LMGGonghuiDeskChange : public LMsg
 		{
 			buff.Read(m_score[i]);
 		}
+		return true;
 	}
 
 	virtual bool Write(LBuff& buff)
 	{
-		buff.Write("m_strUUID");
+		buff.Write(m_strUUID);
 		buff.Write(m_gonghuiId);
 		buff.Write(m_playType);
 		buff.Write(m_baseScore);
+		buff.Write(m_roomType);
 		buff.Write(m_roomId);
 		buff.Write(m_roomState);
 		int i = 0;
@@ -1744,6 +1749,7 @@ struct LMsgL2LMGGonghuiDeskChange : public LMsg
 		{
 			buff.Write(m_score[i]);
 		}
+		return true;
 	}
 
 	virtual LMsg* Clone()

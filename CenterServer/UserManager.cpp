@@ -367,7 +367,7 @@ std::vector<PaiJuInfo> UserManager::_getPaiJuByGonghuiId(Lint gonghuiId)
 	}
 
 	std::stringstream sql;
-	sql << "SELECT roomId, roomCount, score, type, state, user1, user2, user3, user4 FROM room where gonghuiId = " ;
+	sql << "SELECT roomId, roomType, baseScoreType, playType, deskState, user1, user2, user3, user4 FROM room where gonghuiId = " ;
 	sql << gonghuiId;
 
 	if (mysql_real_query(dbSession.GetMysql(), sql.str().c_str(), sql.str().size()))
@@ -396,7 +396,7 @@ std::vector<PaiJuInfo> UserManager::_getPaiJuByGonghuiId(Lint gonghuiId)
 		paiJu.m_roomId = atoi(*row++);
 		paiJu.m_roomCounts = atoi(*row++);
 		paiJu.m_roomScore = atoi(*row++);
-		paiJu.m_roomType = *row++;
+		paiJu.m_roomType = atoi(*row++);
 		paiJu.m_roomState = *row++;
 		paiJu.m_user1 = *row++;
 		paiJu.m_user2 = *row++;
@@ -413,7 +413,7 @@ std::vector<PaiJuInfo> UserManager::_getPaiJuByGonghuiId(Lint gonghuiId)
 bool UserManager::_clearDirtyPaijuInfoFromDB()
 {
 	std::stringstream ss;
-	ss << "DELETE FROM room WHERE state in ('IDLE', 'PLAYING')";
+	ss << "DELETE FROM room WHERE deskState in ('IDLE', 'PLAYING')";
 
 	LLOG_DEBUG("UserManager::SaveUser sql =%s", ss.str().c_str());
 

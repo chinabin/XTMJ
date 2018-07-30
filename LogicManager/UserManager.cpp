@@ -1,4 +1,5 @@
 #include "UserManager.h"
+#include "GonghuiManager.h"
 
 bool UserManager::Init()
 {
@@ -235,6 +236,20 @@ std::vector<Gonghui> UserManager::getGonghuiInfo()
 	return tmpGonghuiInfo;
 }
 
+bool UserManager::isUserInGonghui(Lint gonghuiId, Lint userId)
+{
+	std::vector<GonghuiUser> userList = getGonghuiUserInfoById(gonghuiId);
+
+	for (GonghuiUser user : userList)
+	{
+		if (userId == user.id)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 Gonghui UserManager::getGonghuiInfoById(Lint gonghuiId)
 {
 	Gonghui gonghui;
@@ -246,6 +261,11 @@ Gonghui UserManager::getGonghuiInfoById(Lint gonghuiId)
 	return gonghui;
 }
 
+void UserManager::setGonghuiApply(std::map<Lint, std::set<Lint>> gonghuiApply)
+{
+	m_gonghuiApplyInfo = gonghuiApply;
+}
+
 void UserManager::setGonghuiInfo(std::vector<Gonghui> gonghuiInfo)
 {
 	for (Gonghui gonghui : gonghuiInfo)
@@ -254,9 +274,9 @@ void UserManager::setGonghuiInfo(std::vector<Gonghui> gonghuiInfo)
 	}
 }
 
-void UserManager::updateGonghuiPaiju(Lint gonghuiId, Lint roomId, Lstring roomState, Lstring user[4])
+void UserManager::updateGonghuiPaiju(Lint gonghuiId, Lint roomId, Lstring roomState, Lint user[4])
 {
-	LLOG_ERROR("update paiju, gonghuiId:%d, roomState=%s, roomId=%d, user=%s,%s,%s,%s.", gonghuiId, roomState.c_str(), roomId, user[0].c_str(), user[1].c_str(), user[2].c_str(), user[3].c_str());
+	LLOG_ERROR("update paiju, gonghuiId:%d, roomState=%s, roomId=%d, user=%d,%d,%d,%d.", gonghuiId, roomState.c_str(), roomId, user[0], user[1], user[2], user[3]);
 
 	std::map<Lint, Gonghui>::iterator iter = m_gonghuiInfo.find(gonghuiId);
 	if (iter != m_gonghuiInfo.end())
@@ -269,10 +289,10 @@ void UserManager::updateGonghuiPaiju(Lint gonghuiId, Lint roomId, Lstring roomSt
 			if (paijuIter->m_roomId == roomId)
 			{
 				paijuIter->m_roomState = roomState;
-				paijuIter->m_user1 = user[1];
-				paijuIter->m_user2 = user[2];
-				paijuIter->m_user3 = user[3];
-				paijuIter->m_user4 = user[4];
+				paijuIter->m_user1 = getUserNameById(user[1]);
+				paijuIter->m_user2 = getUserNameById(user[2]);
+				paijuIter->m_user3 = getUserNameById(user[3]);
+				paijuIter->m_user4 = getUserNameById(user[4]);
 				break;
 			}
 			++paijuIter;
@@ -312,7 +332,7 @@ Lint UserManager::delGonghuiPaiju(Lint gonghuiId, Lint roomId)
 
 void UserManager::addGonghuiPaiju(Lint gonghuiId, PaiJuInfo paijuInfo)
 {
-	LLOG_ERROR("add paiju, gonghuiId:%d, roomId=%d,counts=%d,roomType=%s,baseScore=%d.", gonghuiId, paijuInfo.m_roomId, paijuInfo.m_roomCounts, paijuInfo.m_roomType.c_str(), paijuInfo.m_roomScore);
+	LLOG_ERROR("add paiju, gonghuiId:%d, roomId=%d,counts=%d,roomType=%d,baseScore=%d.", gonghuiId, paijuInfo.m_roomId, paijuInfo.m_roomCounts, paijuInfo.m_roomType, paijuInfo.m_roomScore);
 	std::map<Lint, Gonghui>::iterator iter;
 	iter = m_gonghuiInfo.find(gonghuiId);
 	if (iter != m_gonghuiInfo.end())
@@ -322,22 +342,31 @@ void UserManager::addGonghuiPaiju(Lint gonghuiId, PaiJuInfo paijuInfo)
 	}
 }
 
-void UserManager::addGonghuiApply(Lint gonghuiId, Lint userId, Lstring userName)
+void UserManager::addGonghuiApply(Lint gonghuiId, Lint userId)
 {
-	LLOG_ERROR("add gonghui apply, gonghuiId=%d, userId=%d, userName=%s.", gonghuiId, userId, userName.c_str());
+	LLOG_ERROR("add gonghui apply, gonghuiId=%d, userId=%d.", gonghuiId, userId);
 	
 	std::map<Lint, std::set<Lint>>::iterator iter = m_gonghuiApplyInfo.find(gonghuiId);
 	if (iter != m_gonghuiApplyInfo.end())
 	{
 		std::set<Lint> x = iter->second;
+		for (Lint id : x)
+		{
+			if (id == userId)
+			{
+				return;
+			}
+		}
 		x.insert(userId);
 		iter->second = x;
+		gGonghuiManager.insertGonghuiApply(gonghuiId, userId);
 	}
 	else
 	{
 		std::set<Lint> x;
 		x.insert(userId);
 		m_gonghuiApplyInfo.insert(std::map<Lint, std::set<Lint>>::value_type(gonghuiId, x));
+		gGonghuiManager.insertGonghuiApply(gonghuiId, userId);
 	}
 }
 
@@ -441,11 +470,17 @@ Lint UserManager::gonghuiApplyOp(Lint gonghuiId, Lint userId, bool opResult)
 	if (opResult)
 	{
 		// 用户加入工会
+		gGonghuiManager.updateGonghuiApply(gonghuiId, userId, "Approved");
 		return addGonghuiUser(gonghuiId, userId);
 	}
 	else
 	{
 		// 不同意用户加入工会，需要更新删除数据库中的申请记录
+		if (!gGonghuiManager.updateGonghuiApply(gonghuiId, userId, "Refused"))
+		{
+			LLOG_ERROR("Error, failed to delete user %d apply info from db.", userId);
+			return 0;
+		}
 	}
 
 	return 0;
@@ -470,7 +505,11 @@ Lint UserManager::addGonghuiUser(Lint gonghuiId, Lint userId)
 	iter->second.m_userInfo = userVector;
 
 	// TODO 带补充数据库中新增用户的处理逻辑
-
+	if (!gGonghuiManager.addGonghuiUser(gonghuiId, userId))
+	{
+		LLOG_ERROR("Error, add user %d to database failed.", userId);
+		return -7;
+	}
 	return 0;
 }
 
@@ -504,7 +543,11 @@ Lint UserManager::delGonghuiUser(Lint gonghuiId, Lint userId)
 		iter->second.m_userInfo = userVector;
 		iter->second.m_userCount--;
 
-		// TODO 待补充数据库中删除工会用户的逻辑
+		if (!gGonghuiManager.delGonghuiUser(gonghuiId, userId))
+		{
+			LLOG_ERROR("Error, delete user %d from database failed.", userId);
+			return -8;
+		}
 	}
 	return 0;
 }

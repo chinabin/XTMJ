@@ -3458,7 +3458,7 @@ struct LMsgS2CAddDeskRet :public LMsgSC
 		Err_CreditNotEnough = 6,
 	};
 
-	Lint		m_errorCode;//0-成功，1-人已满,2-房间不存在,3-房卡不足 4-IP相同 6-信用不够
+	Lint		m_errorCode;//0-成功，1-人已满,2-房间不存在,3-房卡不足 4-IP相同 6-信用不够 7-用户不在工会
 	Lint		m_deskId;//桌子号码
 	
 	LMsgS2CAddDeskRet() :LMsgSC(MSG_S_2_C_ADD_ROOM)
@@ -5929,9 +5929,9 @@ struct LMsgS2CTaskReward:public LMsgSC
 struct PaiJuInfo
 {
 	Lint m_roomId;    // 房间ID
-	Lint m_roomCounts;  // 局数
-	Lstring m_roomType;  //为3表示3人麻将，为4表示4人麻将
-	Lint m_roomScore;  // 牌局底分
+	Lint m_roomCounts;  // 局数,1-3分别表示4-8-10局
+	Lint m_roomType;  // 407表示3人麻将，为408表示4人麻将
+	Lint m_roomScore;  // 牌局底分，400、401、402分别表示1、2、4分
 	Lstring m_roomState;  // 房间状态
 	Lstring m_user1;
 	Lstring m_user2;
@@ -5953,6 +5953,26 @@ struct GonghuiUser
 	Lstring name;
 
 	MSGPACK_DEFINE(id, name);
+
+	GonghuiUser()
+	{
+		id = 0;
+		name = "";
+	}
+
+	bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(id), id);
+		ReadMapData(obj, NAME_TO_STR(name), name);
+		return true;
+	}
+
+	bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteKeyValue(pack, NAME_TO_STR(id), id);
+		WriteKeyValue(pack, NAME_TO_STR(name), name);
+		return true;
+	}
 };
 
 struct Gonghui
@@ -6221,6 +6241,14 @@ struct LMsgS2CGonghuiOPResult : public LMsgSC
 	// 5创建工会房间策略
 	// 6删除工会房间策略
 	Lint    m_opType; 
+	// -1 工会不存在
+	// -2 用户未申请加入工会
+	// -3 工会房间策略非法
+	// -4 创建工会房间失败
+	// -5 房卡不足
+	// -6 用户已经是工会成员
+	// -7 新增用户到数据库失败
+	// -8 从数据库中删除用户失败
 	Lint    m_errorCode; // 操作结果： 0成功，其他失败
 
 	LMsgS2CGonghuiOPResult() : LMsgSC(MSG_S_2_C_GONGHUI_OPRESULT)
@@ -6230,6 +6258,7 @@ struct LMsgS2CGonghuiOPResult : public LMsgSC
 
 	virtual bool Read(msgpack::object& obj)
 	{
+		ReadMapData(obj, NAME_TO_STR(m_opType), m_opType);
 		ReadMapData(obj, NAME_TO_STR(m_errorCode), m_errorCode);
 		return true;
 	}
@@ -6380,66 +6409,25 @@ struct LMsgC2SGonghuiRoomOP : public LMsgSC
 struct LMsgS2CGonghuiDeskChange : public LMsgSC
 {
 	Lint m_gonghuiId;  // 工会ID
-	Lint m_roomId;     // 工会房间ID
-	Lint m_playType;
-	Lint m_baseScore;
-	Lint m_roomState;  // 工会房间状态，为0表示无变更，1表示准备（新用户加入房间），2表示Playing，3表示结束
-	Lstring m_user[4]; // 进入房间的用户，当roomState为2时使用，更新数据库数据
-	Lint m_score[4];   // 当房间局数结束时，记录总分数
+	Gonghui m_gonghui;  // 工会信息
 
 	LMsgS2CGonghuiDeskChange() : LMsgSC(MSG_S_2_C_GONGHUIDESK_CHANGE)
 	{
 		m_gonghuiId = 0;
-		m_roomId = 0;
-		m_roomState = 0;
-		m_playType = 0;
-		m_baseScore = 1;
-		m_user[0] = "";
-		m_user[1] = "";
-		m_user[2] = "";
-		m_user[3] = "";
-		m_score[0] = 0;
-		m_score[1] = 0;
-		m_score[2] = 0;
-		m_score[3] = 0;
 	}
 
 	virtual bool Read(msgpack::object& obj)
 	{
 		ReadMapData(obj, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
-		ReadMapData(obj, NAME_TO_STR(m_roomId), m_roomId);
-		ReadMapData(obj, NAME_TO_STR(m_playType), m_playType);
-		ReadMapData(obj, NAME_TO_STR(m_baseScore), m_baseScore);
-		ReadMapData(obj, NAME_TO_STR(m_roomState), m_roomState);
-		//ReadMapData(obj, NAME_TO_STR(m_user), m_user);
-		//ReadMapData(obj, NAME_TO_STR(m_score), m_score);
+		ReadMapData(obj, NAME_TO_STR(m_gonghui), m_gonghui);
 	}
 
 	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
 	{
-		WriteMap(pack, 8);
+		WriteMap(pack, 3);
 		WriteKeyValue(pack, "m_msgId", m_msgId);
 		WriteKeyValue(pack, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
-		WriteKeyValue(pack, NAME_TO_STR(m_roomId), m_roomId);
-		WriteKeyValue(pack, NAME_TO_STR(m_playType), m_playType);
-		WriteKeyValue(pack, NAME_TO_STR(m_baseScore), m_baseScore);
-		WriteKeyValue(pack, NAME_TO_STR(m_roomState), m_roomState);
-
-		WriteKey(pack, "m_user");
-		std::vector<Lstring> vecUser;
-		for (Lint i = 0; i < 4; ++i)
-		{
-			vecUser.push_back(m_user[i]);
-		}
-		WriteKey(pack, vecUser);
-
-		WriteKey(pack, "m_score");
-		std::vector<Lint> vecScore;
-		for (Lint i = 0; i < 4; ++i)
-		{
-			vecScore.push_back(m_score[i]);
-		}
-		WriteKey(pack, vecScore);
+		WriteKeyValue(pack, NAME_TO_STR(m_gonghui), m_gonghui);
 	}
 
 	virtual LMsg* Clone()
@@ -6472,7 +6460,7 @@ struct LMsgS2CQueryApplyInfo : public LMsgSC
 
 	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
 	{
-		WriteMap(pack, 4);
+		WriteMap(pack, 5);
 		WriteKeyValue(pack, "m_msgId", m_msgId);
 		WriteKeyValue(pack, "m_strUserUUID", m_strUserUUID);
 		WriteKeyValue(pack, NAME_TO_STR(m_gonghuiId), m_gonghuiId);

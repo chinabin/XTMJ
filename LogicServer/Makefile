@@ -71,7 +71,7 @@ MAKE_PATH = mkdir
 all: $(TARGET_BIN) Makefile 
 
 
-#$(CC) -shared -o $(LIB_BASE) $(LIB_BASE_OBJS) $(LIBS) -lpthread  -Wl,zdefs,-Bsymbolic 
+#$(CC) -shared -g -o $(LIB_BASE) $(LIB_BASE_OBJS) $(LIBS) -lpthread  -Wl,zdefs,-Bsymbolic 
 $(TARGET_BIN):$(PATS)
 	$(REMOVE) ./libs
 	$(MAKE_PATH) ./libs

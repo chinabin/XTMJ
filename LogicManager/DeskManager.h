@@ -12,10 +12,12 @@ struct DeskInfos
 	Lint m_cardType;		//打多少圈，打10圈的时候，每人需要1张房卡，所以加入房间需要判断自己是否房卡足够
 	Lint m_gameType;		//玩的是什么游戏 商丘麻将 周口麻将 等等
 	Lstring m_createIp;		//如果玩家指定了同IP不能进入那么就是创建者的ip
+	Lint m_gonghuiId;       //工会房间ID
 	//...
 	//其他扩展
 	DeskInfos(Lint uid=0, Lint serverid=0, Lint climit=0, Lint cardType=0, Lint gameType=0, Lstring ip=""):m_userId(uid),m_logicServerId(serverid),m_creditsLimit(climit),m_cardType(cardType),m_gameType(gameType),m_createIp(ip)
 	{
+		m_gonghuiId = 0;
 	}
 
 	bool operator!()const
@@ -29,11 +31,12 @@ class DeskManager:public LSingleton<DeskManager>
 public:
 	virtual	bool	Init();
 	virtual	bool	Final();
+
 public:
 	//返回LogicServer ID
 	Lint	RecycleDeskId(Lint iDeskId);
 
-	Lint	GetFreeDeskId(Lint uid, Lint nLogicServerID,Lint nInCredits, Lint cardType, Lint gameType, Lstring ip);
+	Lint	GetFreeDeskId(Lint uid, Lint nLogicServerID,Lint nInCredits, Lint cardType, Lint gameType, Lstring ip, Lint gonghuiId);
 
 	Lint    GetDeskCreditLimit(Lint iDeskId);
 

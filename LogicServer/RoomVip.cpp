@@ -726,6 +726,11 @@ Lint RoomVip::CreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* pMsg, User* pUser)
 		return 0;
 	}
 
+	std::vector<int> playTypes;
+	playTypes.push_back(pMsg->m_playType);
+	playTypes.push_back(pMsg->m_baseScore);
+	playTypes.push_back(500); // 500 表示是工会房
+
 	Desk* desk = GetFreeDesk(pMsg->m_deskId, GameType::MJWuHanXianTao, pMsg->m_roomType);
 	desk->SetPlayerCapacity(4);
 	if (pMsg->m_playType == 407)
@@ -745,13 +750,14 @@ Lint RoomVip::CreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* pMsg, User* pUser)
 
 	desk->setDeskGonghuiId(pMsg->m_gonghuiId);
 
-	LLOG_INFO("RoomVip::CreateGonghuiDesk userid=%d deskid=%d gametype=%d, userCount=%d.", pMsg->m_userId, pMsg->m_deskId, 16, desk->GetPlayerCapacity());
+	LLOG_INFO("RoomVip::CreateGonghuiDesk userid=%d deskid=%d gametype=%d, userCount=%d,gonghuiId=%d.", pMsg->m_userId, pMsg->m_deskId, 16, desk->GetPlayerCapacity(), desk->getDeskGonghuiId());
 	//////////////////////////////////////////////////////////////////////////
 	VipLogItem* log = gVipLogMgr.GetNewLogItem(circle, pMsg->m_userId);
 	log->m_desk = desk;
 	log->m_curCircle = 0;
 	log->m_maxCircle = circle;
 	log->m_state = 16;
+	log->m_playtype = playTypes;
 	log->m_deskId = log->m_desk->GetDeskId();
 	log->m_iPlayerCapacity = desk->GetPlayerCapacity();
 	log->m_desk->SetVip(log);
@@ -990,6 +996,7 @@ Lint RoomVip::AddToVipDesk(User* pUser, Lint nDeskID)
 		tmpMsg.m_roomState = desk->getDeskState();
 		tmpMsg.m_playType = desk->GetPlayerCapacity();
 		tmpMsg.m_baseScore = desk->getBaseScore();
+		tmpMsg.m_roomType = desk->getCardType();
 		
 		for (Lint x = 0; x < DESK_USER_COUNT; x++)
 		{
@@ -998,6 +1005,8 @@ Lint RoomVip::AddToVipDesk(User* pUser, Lint nDeskID)
 				tmpMsg.m_user[x] = desk->m_user[x]->GetUserDataId();
 			}
 		}
+
+		LLOG_DEBUG("Error, gonghuiId=%d,roomId=%d,roomState=%d.", tmpMsg.m_gonghuiId, tmpMsg.m_roomId, tmpMsg.m_roomState);
 
 		gWork.SendToLogicManager(tmpMsg);
 	}

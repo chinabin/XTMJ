@@ -26,13 +26,15 @@ public:
 	void delUserLoginInfo(Lint iUserId);
 	boost::shared_ptr<CSafeResourceLock<UserLoginInfo> > getUserLoginInfo(Lint iUserId);
 	void setGonghuiInfo(std::vector<Gonghui> gonghuiInfo);
+	void setGonghuiApply(std::map<Lint, std::set<Lint>> gonghuiApply);
 	std::vector<Gonghui> getGonghuiInfo();
 	Gonghui getGonghuiInfoById(Lint gonghuiId);
+	bool isUserInGonghui(Lint gonghuiId, Lint userId);
 	std::vector<GonghuiUser> getGonghuiUserInfoById(Lint gonghuiId);
 	void addGonghuiPaiju(Lint gonghuiId, PaiJuInfo paijuInfo);
-	void addGonghuiApply(Lint gonghuiId, Lint userId, Lstring userName);
+	void addGonghuiApply(Lint gonghuiId, Lint userId);
 	Lint delGonghuiPaiju(Lint gonghuiId, Lint roomId);
-	void updateGonghuiPaiju(Lint gonghuiId, Lint roomId, Lstring roomState, Lstring user[4]);
+	void updateGonghuiPaiju(Lint gonghuiId, Lint roomId, Lstring roomState, Lint user[4]);
 	std::vector<Gonghui> getUserGonghuiByUserId(Lint userId);
 	Lint gonghuiApplyOp(Lint gonghuiId, Lint userId, bool opResult);
 	std::vector<GonghuiUser> getGonghuiApplyUser(Lint gonghuiId);

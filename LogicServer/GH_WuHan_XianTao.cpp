@@ -66,7 +66,7 @@ void GH_WuHan_XianTao::shutdown(void)
 	m_curGetCard = NULL;
 	m_beforePos = INVAILD_POS;
 	m_beforeType = THINK_OPERATOR_NULL;
-	m_zhuangpos = L_Rand(0, 3);//0;	// 庄开始为0			// 改为随机庄
+	m_zhuangpos = L_Rand(0, 2);//0;	// 庄开始为0			// 改为随机庄
 	m_curPos = INVAILD_POS;
 	m_endStartPos = 0;
 	m_endStartCurPos = 0;

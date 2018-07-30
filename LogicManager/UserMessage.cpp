@@ -183,13 +183,13 @@ void CUserMessage::HanderCenterGMCharge(LMsgCe2LGMCharge* msg)
 	LLOG_DEBUG("Work::HanderCenterGMCharge %d:%d:%d:%d", msg->m_userid, msg->m_cardType, msg->m_cardCount, msg->m_oper);
 
 	boost::shared_ptr<CSafeResourceLock<User> > safeUser = gUserManager.getUserbyUserId(msg->m_userid);
-	if(safeUser && safeUser->isValid())
+	if (safeUser && safeUser->isValid())
 	{
 		safeUser->getResource()->AddCardCount(msg->m_cardType, msg->m_cardCount, msg->m_oper, msg->m_admin, false);
 	}
 	else
 	{
-		LLOG_ERROR("Work::HanderCenterGMCharge user not exiest %d:%d:%d:%d",  msg->m_userid, msg->m_cardType, msg->m_cardCount,msg->m_oper);
+		LLOG_ERROR("Work::HanderCenterGMCharge user not exiest %d:%d:%d:%d", msg->m_userid, msg->m_cardType, msg->m_cardCount, msg->m_oper);
 	}
 }
 
@@ -198,9 +198,9 @@ void CUserMessage::HanderCenterGMCoins(LMsgCe2LGMCoins* msg)
 	LLOG_DEBUG("Work::HanderCenterGMCoins %d:%d:%d", msg->m_userid, msg->m_coins, msg->m_totalcoins);
 
 	boost::shared_ptr<CSafeResourceLock<User> > safeUser = gUserManager.getUserbyUserId(msg->m_userid);
-	if(safeUser && safeUser->isValid())
+	if (safeUser && safeUser->isValid())
 	{
-		if ( msg->m_coins > 0 )
+		if (msg->m_coins > 0)
 		{
 			safeUser->getResource()->AddCoinsCount(msg->m_coins, COINS_OPER_TYPE_CHARGE, false);
 		}
@@ -220,14 +220,14 @@ void CUserMessage::HanderCenterAddAgent(LMsgCE2LMGAddAgent* msg)
 	LLOG_DEBUG("CUserMessage::HanderCenterAddAgent uid:%d agentId:%d", msg->m_userid, msg->m_agentId);
 
 	boost::shared_ptr<CSafeResourceLock<User> > safeUser = gUserManager.getUserbyUserId(msg->m_userid);
-	if(safeUser.get() == NULL || !safeUser->isValid())
+	if (safeUser.get() == NULL || !safeUser->isValid())
 	{
 		return;
 	}
 
 	boost::shared_ptr<User> user = safeUser->getResource();
 
-	if(msg->m_result == ErrorCode::ErrorNone)
+	if (msg->m_result == ErrorCode::ErrorNone)
 		user->m_userData.m_agentId = msg->m_agentId;
 
 	LMsgS2CBindInviter ret;
@@ -244,53 +244,37 @@ void CUserMessage::HanderGonghuiDeskChange(LMsgL2LMGGonghuiDeskChange* msg)
 		return;
 	}
 
+	gUserManager.updateGonghuiPaiju(msg->m_gonghuiId, msg->m_roomId, std::to_string(msg->m_roomState), msg->m_user);
+
+	if (msg->m_roomState == DESK_PLAY)
+	{
+		// TODO 创建工会房间
+		gWork.CreateGonghuiRoom(msg->m_gonghuiId, msg->m_roomType, msg->m_playType, msg->m_baseScore);
+	}
+
+	// TODO 这里简单处理，一单发现桌子状态变更之后，把当前工会下的所有桌子都发出去
 	LMsgS2CGonghuiDeskChange cMsg;
 	cMsg.m_gonghuiId = msg->m_gonghuiId;
-	cMsg.m_roomId = msg->m_roomId;
-	cMsg.m_playType = msg->m_playType;
-	cMsg.m_baseScore = msg->m_baseScore;
-	cMsg.m_roomState = msg->m_roomState;
-	for (int i = 0; i < 4; i++)
-	{
-		Lint tmpUserId = msg->m_user[i];
-		if (0 != tmpUserId)
-		{
-			cMsg.m_user[i] = gUserManager.getUserNameById(tmpUserId);
-		}
+	cMsg.m_gonghui = gUserManager.getGonghuiInfoById(msg->m_gonghuiId);
 
-		cMsg.m_score[i] = msg->m_score[i];
-	}
-	
 	std::vector<GonghuiUser> gonghuiUsers = gUserManager.getGonghuiUserInfoById(msg->m_gonghuiId);
-	
+
 	for (GonghuiUser tmpUser : gonghuiUsers)
 	{
 		// 这里发送消息到所有工会的已登录的用户客户端上，同时更新工会缓存信息
 		boost::shared_ptr<CSafeResourceLock<User> > safeUser = gUserManager.getUserbyUserId(tmpUser.id);
 		if (safeUser.get() == NULL || !safeUser->isValid())
 		{
-			return;
+			continue;
 		}
 
 		// 发送的消息需要转换为其他
 		boost::shared_ptr<User> user = safeUser->getResource();
-		user->Send(msg->GetSendBuff());
-	}
-
-	if (msg->m_roomState == DESK_PLAY)
-	{
-		Lint roomCounts = gUserManager.delGonghuiPaiju(msg->m_gonghuiId, msg->m_roomId);
-		
-		// TODO 创建工会房间
-		gWork.CreateGonghuiRoom(msg->m_gonghuiId, roomCounts, msg->m_playType, msg->m_baseScore);
-	}
-	else if (msg->m_roomState == DESK_WAIT)
-	{
-		gUserManager.updateGonghuiPaiju(msg->m_gonghuiId, msg->m_roomId, std::to_string(msg->m_roomState), cMsg.m_user);
-	}
-	else
-	{
-		// TODO 其他类型默认为房间结算，此处需要考虑记录score分数
+		if (user->GetOnline())
+		{
+			LLOG_ERROR("Send gonghui room change to user %d.", user->m_userData.m_id);
+			user->Send(msg->GetSendBuff());
+		}
 	}
 }
 

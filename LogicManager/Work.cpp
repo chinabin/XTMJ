@@ -13,6 +13,7 @@
 #include "UserMessageMsg.h"
 #include "RuntimeInfoMsg.h"
 #include "RLogHttp.h"
+#include "GonghuiManager.h"
 
 using namespace boost::asio;  
 using boost::asio::ip::tcp; 
@@ -45,11 +46,20 @@ bool Work::Init()
 		return false;
 	}
 
+	if (!gGonghuiManager.Init())
+	{
+		LLOG_ERROR("Error, gonghuiManager init error.");
+		return false;
+	}
+
 	if (!gActiveManager.Init())
 	{
 		LLOG_ERROR("gActiveManager.Init error");
 		return false;
 	}
+
+	gUserManager.setGonghuiInfo(gGonghuiManager.getGonghuiInfo());
+	gUserManager.setGonghuiApply(gGonghuiManager.getGonghuiApplyInfo());
 
 	if( !gRLT.Init( gConfig.GetRemoteLogStart() !=0, gConfig.GetRemoteLogUrl(), (size_t)gConfig.GetMaxCachedLogSize(), (size_t)gConfig.GetMaxCachedLogNum() ) )
 	{
@@ -656,7 +666,7 @@ bool Work::CreateGonghuiRoom(Lint gonghuiId, Lint roomType, Lint playType, Lint 
 	send.m_roomType = roomType;
 
 	Lstring ipAddr = "127.0.0.1";
-	Lint roomId = gDeskManager.GetFreeDeskId(gonghui.m_adminUserId, 1001, 0, send.m_roomType, 16, ipAddr);
+	Lint roomId = gDeskManager.GetFreeDeskId(gonghui.m_adminUserId, 1001, 0, send.m_roomType, 16, ipAddr, gonghuiId);
 	send.m_deskId = roomId;
 	// 此处暂时和LogicServer的id保持一致
 	SendMessageToAllLogic(send);
@@ -745,8 +755,8 @@ void Work::HanderCenterGonghuiInfo(LMsgCe2LGonghuiInfo* msg)
 		return;
 	}
 
-	std::vector<Gonghui> gonghuiInfo = msg->m_gonghui;
-	gUserManager.setGonghuiInfo(gonghuiInfo);
+	//std::vector<Gonghui> gonghuiInfo = msg->m_gonghui;
+	//gUserManager.setGonghuiInfo(gonghuiInfo);
 	//PrintGonghuiInfo(gonghuiInfo);
 }
 

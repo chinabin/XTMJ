@@ -228,6 +228,11 @@ public:
 	{
 		return m_iPlayerCapacity;
 	}
+
+	inline Lint getCardType()
+	{
+		return m_cardType;
+	}
 protected:
 	void			_clearData();
 	bool			_createRegister(GameType gameType);

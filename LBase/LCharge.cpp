@@ -4,8 +4,8 @@
 Lint CARD_TYPE_NEED_COUNT[CARD_TYPE_MAX]={
 	2,		// CARD_TYPE_NONE
 	2,		// CARD_TYPE_4
-	3,		// CARD_TYPE_8
-	1,		// CARD_TYPE_10
+	4,		// CARD_TYPE_8
+	8,		// CARD_TYPE_10
 	5,		// CARD_TYPE_16
 	2,		// CARD_TYPE_ZK_1
 	3,		// CARD_TYPE_ZK_2
@@ -17,9 +17,9 @@ Lint CARD_TYPE_NEED_COUNT[CARD_TYPE_MAX]={
 
 Lint CARD_TYPE_CIRCLE[CARD_TYPE_MAX]={
 	4,		// CARD_TYPE_NONE
-	4,		// CARD_TYPE_4
-	8,		// CARD_TYPE_8
-	10,		// CARD_TYPE_10
+	5,		// CARD_TYPE_4
+	10,		// CARD_TYPE_8
+	20,		// CARD_TYPE_10
 	16,		// CARD_TYPE_16
 	1,		// CARD_TYPE_ZK_1
 	2,		// CARD_TYPE_ZK_2
@@ -49,7 +49,6 @@ bool NeedCardCount(const Lint cardType, Lint& count)
 
 	switch(cardType)
 	{
-		case CARD_TYPE_10:
 		case CARD_TYPE_ZK_4:
 		case CARD_TYPE_ZK_PH_8:
 		case CARD_TYPE_ZK_PH_16:
