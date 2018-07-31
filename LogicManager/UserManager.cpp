@@ -289,14 +289,16 @@ void UserManager::updateGonghuiPaiju(Lint gonghuiId, Lint roomId, Lstring roomSt
 			if (paijuIter->m_roomId == roomId)
 			{
 				paijuIter->m_roomState = roomState;
-				paijuIter->m_user1 = getUserNameById(user[1]);
-				paijuIter->m_user2 = getUserNameById(user[2]);
-				paijuIter->m_user3 = getUserNameById(user[3]);
-				paijuIter->m_user4 = getUserNameById(user[4]);
+				paijuIter->m_user1 = getUserNameById(user[0]);
+				paijuIter->m_user2 = getUserNameById(user[1]);
+				paijuIter->m_user3 = getUserNameById(user[2]);
+				paijuIter->m_user4 = getUserNameById(user[3]);
 				break;
 			}
 			++paijuIter;
 		}
+
+		iter->second.m_paijuInfo = paijuInfo;
 	}
 }
 
@@ -608,4 +610,5 @@ Lint UserManager::updateGonghuiRoomPolicy(Lint gonghuiId, Lstring roomPolicy, bo
 
 	// TODO 检测policy的合法性，并且调用创建工会房间的接口，创建房间
 	// TODO 待补充数据库入库信息
+	gGonghuiManager.updateGonghuiPolicy(gonghuiId, newPolicy);
 }

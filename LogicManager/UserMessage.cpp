@@ -273,7 +273,7 @@ void CUserMessage::HanderGonghuiDeskChange(LMsgL2LMGGonghuiDeskChange* msg)
 		if (user->GetOnline())
 		{
 			LLOG_ERROR("Send gonghui room change to user %d.", user->m_userData.m_id);
-			user->Send(msg->GetSendBuff());
+			user->Send(cMsg);
 		}
 	}
 }

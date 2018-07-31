@@ -5945,6 +5945,34 @@ struct PaiJuInfo
 	}
 
 	MSGPACK_DEFINE(m_roomId, m_roomCounts, m_roomType, m_roomScore, m_roomState, m_user1, m_user2, m_user3, m_user4);
+
+	bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_roomId), m_roomId);
+		ReadMapData(obj, NAME_TO_STR(m_roomCounts), m_roomCounts);
+		ReadMapData(obj, NAME_TO_STR(m_roomType), m_roomType);
+		ReadMapData(obj, NAME_TO_STR(m_roomScore), m_roomScore);
+		ReadMapData(obj, NAME_TO_STR(m_roomState), m_roomState);
+		ReadMapData(obj, NAME_TO_STR(m_user1), m_user1);
+		ReadMapData(obj, NAME_TO_STR(m_user2), m_user2);
+		ReadMapData(obj, NAME_TO_STR(m_user3), m_user3);
+		ReadMapData(obj, NAME_TO_STR(m_user4), m_user4);
+		return true;
+	}
+
+	bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteKeyValue(pack, NAME_TO_STR(m_roomId), m_roomId);
+		WriteKeyValue(pack, NAME_TO_STR(m_roomCounts), m_roomCounts);
+		WriteKeyValue(pack, NAME_TO_STR(m_roomType), m_roomType);
+		WriteKeyValue(pack, NAME_TO_STR(m_roomScore), m_roomScore);
+		WriteKeyValue(pack, NAME_TO_STR(m_roomState), m_roomState);
+		WriteKeyValue(pack, NAME_TO_STR(m_user1), m_user1);
+		WriteKeyValue(pack, NAME_TO_STR(m_user2), m_user2);
+		WriteKeyValue(pack, NAME_TO_STR(m_user3), m_user3);
+		WriteKeyValue(pack, NAME_TO_STR(m_user4), m_user4);
+		return true;
+	}
 };
 
 struct GonghuiUser
