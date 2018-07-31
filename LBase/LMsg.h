@@ -6448,6 +6448,7 @@ struct LMsgS2CGonghuiDeskChange : public LMsgSC
 	{
 		ReadMapData(obj, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
 		ReadMapData(obj, NAME_TO_STR(m_gonghui), m_gonghui);
+		return true;
 	}
 
 	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
@@ -6456,6 +6457,7 @@ struct LMsgS2CGonghuiDeskChange : public LMsgSC
 		WriteKeyValue(pack, "m_msgId", m_msgId);
 		WriteKeyValue(pack, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
 		WriteKeyValue(pack, NAME_TO_STR(m_gonghui), m_gonghui);
+		return true;
 	}
 
 	virtual LMsg* Clone()
