@@ -109,6 +109,11 @@ public:
 	Lint			AddToVipDesk(User* pUser, Lint nDeskID);
 
 	bool			LeaveToVipDesk(LMsgC2SLeaveDesk* pMsg, User* pUser);
+
+	bool            broadcastGonghuiChange(Lint deskId, Desk *desk);
+
+	Lint            convertBaseScoreToType(Lint baseScore);
+	Lint            convertPlayerNumberToType(Lint playerNumber);
 	
 private:
 	DeskMap		m_deskMap;

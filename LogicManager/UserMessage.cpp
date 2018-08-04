@@ -6,6 +6,7 @@
 #include "UserManager.h"
 #include "RuntimeInfoMsg.h"
 #include "LVipLog.h"
+#include "GonghuiManager.h"
 
 CUserMessage::CUserMessage()
 {
@@ -246,10 +247,38 @@ void CUserMessage::HanderGonghuiDeskChange(LMsgL2LMGGonghuiDeskChange* msg)
 
 	gUserManager.updateGonghuiPaiju(msg->m_gonghuiId, msg->m_roomId, std::to_string(msg->m_roomState), msg->m_user);
 
-	if (msg->m_roomState == DESK_PLAY)
+	if (msg->m_roomState == DESK_PLAY || msg->m_roomState == 3 || msg->m_roomState == 4)
 	{
 		// TODO 创建工会房间
-		gWork.CreateGonghuiRoom(msg->m_gonghuiId, msg->m_roomType, msg->m_playType, msg->m_baseScore);
+		// 需要先检测房卡是否够，如果不够，则不能创建房间
+		int count;
+		NeedCardCount(msg->m_roomType, count);
+		// 这里代码有问题
+		Gonghui x = gUserManager.getGonghuiInfoById(msg->m_gonghuiId);
+		Lint userCards = gGonghuiManager.getUserCardsById(x.m_adminUserId);
+		LLOG_ERROR("gonghuiID=%d, adminUserId=%d, userCard=%d, roomState=%d, count=%d.", x.m_gonghuiId, x.m_adminUserId, userCards, msg->m_roomState, count);
+		if (msg->m_roomState == DESK_PLAY && userCards >= count)
+		{
+			gWork.CreateGonghuiRoom(msg->m_gonghuiId, msg->m_roomType, msg->m_playType, msg->m_baseScore);
+		}
+
+		Lstring roomState;
+		if (3 == msg->m_roomState)
+		{
+			roomState = "End";
+			if (gGonghuiManager.addGonghuiDeskInfo(msg->m_roomId, msg->m_gonghuiId, msg->m_baseScore, msg->m_roomType, msg->m_playType, msg->m_playNum, roomState, msg->m_user, msg->m_score))
+			{
+				LLOG_ERROR("Error, failed to record desk info to db, deskId:%d, gonghuiid=%d.", msg->m_roomId, msg->m_gonghuiId);
+			}
+		}
+		else if (4 == msg->m_roomState)
+		{
+			roomState = "Abort";
+			if (gGonghuiManager.addGonghuiDeskInfo(msg->m_roomId, msg->m_gonghuiId, msg->m_baseScore, msg->m_roomType, msg->m_playType, msg->m_playNum, roomState, msg->m_user, msg->m_score))
+			{
+				LLOG_ERROR("Abort desk, failed to record desk info to db, deskId:%d, gonghuiid=%d.", msg->m_roomId, msg->m_gonghuiId);
+			}
+		}
 	}
 
 	// TODO 这里简单处理，一单发现桌子状态变更之后，把当前工会下的所有桌子都发出去
@@ -309,6 +338,12 @@ void CUserMessage::HanderModifyUserCardNum(LMsgL2LMGModifyCard* msg)
 	if(safeUser.get() == NULL || !safeUser->isValid())
 	{
 		LLOG_ERROR("Work::HanderModifyUserCardNum user not exiest, userid=%d, type=%d, count=%d, operType=%d",  msg->m_userid, msg->cardType, msg->cardNum, msg->operType);
+		
+		// 取不到用户，说明用户可能未登陆，直接扣除房卡即可
+		bool ret1 = gGonghuiManager.decreaseCardCount(msg->m_userid, msg->isAddCard, msg->cardNum);
+		Lint userCards = gGonghuiManager.getUserCardsById(msg->m_userid);
+		bool ret2 = gGonghuiManager.SaveCardInfo(msg->m_userid, msg->cardType, msg->cardNum, msg->operType, msg->admin, userCards, "");
+		LLOG_ERROR("decrease card count, userId=%d, count=%d, numCards=%d, ret1=%d, ret2=%d.", msg->m_userid, msg->cardNum, userCards, ret1, ret2);
 		return;
 	}
 

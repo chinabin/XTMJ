@@ -6,6 +6,7 @@
 #include "DeskManager.h"
 #include "RuntimeInfoMsg.h"
 #include "RLogHttp.h"
+#include "GonghuiManager.h"
 
 User::User(LUser data, Lint gateId) : m_userData(data)
 {
@@ -400,14 +401,26 @@ void User::HanderUserGonghuiOp(LMsgC2SGonghuiUserOp* msg)
 	Lint opType = msg->m_opType;
 	Lint gonghuiId = msg->m_gonghuiId;
 	Lint userId = msg->m_userId;
+	Lint sessionUserId = m_userData.m_id;
 
-	LLOG_ERROR("HanderUserGonghuiOp, opType=%d, gonghuiId=%d, userId=%d.", opType, gonghuiId, userId);
+	LLOG_ERROR("HanderUserGonghuiOp, sessionUserId=%d, opType=%d, gonghuiId=%d, userId=%d.", sessionUserId, opType, gonghuiId, userId);
 
 	LMsgS2CGonghuiOPResult opRet;
+	opRet.m_opType = opType;
+
+	Gonghui tmpGonghui = gGonghuiManager.getGonghuiInfoById(gonghuiId);
+	if (tmpGonghui.m_gonghuiId == 0)
+	{
+		LLOG_ERROR("Error, gonghui does not exist, gonghuiId=%d.", gonghuiId);
+		opRet.m_errorCode = -1;
+		Send(opRet);
+		return;
+	}
 	
 	//1 同意用户加入工会
 	//2 拒绝用户加入工会
 	//3 从工会剔除用户
+	//7 解散工会
 	if (1 == opType)
 	{
 		opRet.m_opType = 1;
@@ -420,8 +433,27 @@ void User::HanderUserGonghuiOp(LMsgC2SGonghuiUserOp* msg)
 	}
 	else if (3 == opType)
 	{
+		if (userId == tmpGonghui.m_adminUserId)
+		{
+			LLOG_ERROR("Error, cannot delete gonghui guizhang,gonghuiId=%d,huizhang=%d.", gonghuiId, tmpGonghui.m_adminUserId);
+			opRet.m_errorCode = -9;
+			Send(opRet);
+			return;
+		}
 		opRet.m_opType = 3;
 		opRet.m_errorCode = gUserManager.delGonghuiUser(gonghuiId, userId);
+	}
+	else if (7 == opType)
+	{
+		if (userId != tmpGonghui.m_adminUserId)
+		{
+			LLOG_ERROR("Error, current user:%d is not gonghui admin,gonghuiId=%d,huizhang=%d.", userId, gonghuiId, tmpGonghui.m_adminUserId);
+			opRet.m_errorCode = -10;
+			Send(opRet);
+			return;
+		}
+		opRet.m_opType = 7;
+		opRet.m_errorCode = gUserManager.delGonghui(gonghuiId);
 	}
 
 	Send(opRet);
@@ -583,6 +615,31 @@ void User::HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg)
 				return;
 			}
 		}
+
+		// 发送消息给工会所有的玩家
+		LMsgS2CGonghuiDeskChange cMsg;
+		cMsg.m_gonghuiId = msg->m_gonghuiId;
+		cMsg.m_gonghui = gUserManager.getGonghuiInfoById(msg->m_gonghuiId);
+
+		std::vector<GonghuiUser> gonghuiUsers = gUserManager.getGonghuiUserInfoById(msg->m_gonghuiId);
+
+		for (GonghuiUser tmpUser : gonghuiUsers)
+		{
+			// 这里发送消息到所有工会的已登录的用户客户端上，同时更新工会缓存信息
+			boost::shared_ptr<CSafeResourceLock<User> > safeUser = gUserManager.getUserbyUserId(tmpUser.id);
+			if (safeUser.get() == NULL || !safeUser->isValid())
+			{
+				continue;
+			}
+
+			// 发送的消息需要转换为其他
+			boost::shared_ptr<User> user = safeUser->getResource();
+			if (user->GetOnline())
+			{
+				LLOG_ERROR("Send gonghui room change to user %d.", user->m_userData.m_id);
+				user->Send(cMsg);
+			}
+		}
 	}
 	else
 	{
@@ -599,6 +656,21 @@ void User::HanderUserQueryGonghuiDesk(LMsgC2SQueryGonghuiDesk* msg)
 	{
 		return;
 	}
+	Lint userId = m_userData.m_id;
+	Lint gonghuiId = msg->m_gonghuiId;
+	Lint beginPos = msg->m_beginPos;
+	Lint endPos = msg->m_endPos;
+
+	LMsgS2CQueryGonghuiDesk send;
+	send.m_gonghuiId = gonghuiId;
+	
+	std::vector<RoomRecord> records = gGonghuiManager.getGonghuiDeskRecords(gonghuiId, beginPos, endPos);
+	send.m_deskCounts = records.size();
+	
+	// TODO 这里需要把records中的用户id转换成name
+	send.m_records = records;
+
+	Send(send);
 }
 
 void User::HanderUserCreateDesk(LMsgC2SCreateDesk* msg)

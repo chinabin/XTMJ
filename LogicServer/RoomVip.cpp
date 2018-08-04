@@ -749,6 +749,7 @@ Lint RoomVip::CreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* pMsg, User* pUser)
 	}
 
 	desk->setDeskGonghuiId(pMsg->m_gonghuiId);
+	desk->setDeskOwner(pMsg->m_userId);
 
 	LLOG_INFO("RoomVip::CreateGonghuiDesk userid=%d deskid=%d gametype=%d, userCount=%d,gonghuiId=%d.", pMsg->m_userId, pMsg->m_deskId, 16, desk->GetPlayerCapacity(), desk->getDeskGonghuiId());
 	//////////////////////////////////////////////////////////////////////////
@@ -989,31 +990,60 @@ Lint RoomVip::AddToVipDesk(User* pUser, Lint nDeskID)
 
 	if (0 != desk->getDeskGonghuiId())
 	{
-		// 玩家进入工会房间，需要广播，同时更新LogicManager中的缓存
-		LMsgL2LMGGonghuiDeskChange tmpMsg;
-		tmpMsg.m_roomId = nDeskID;
-		tmpMsg.m_gonghuiId = desk->getDeskGonghuiId();
-		tmpMsg.m_roomState = desk->getDeskState();
-		tmpMsg.m_playType = desk->GetPlayerCapacity();
-		tmpMsg.m_baseScore = desk->getBaseScore();
-		tmpMsg.m_roomType = desk->getCardType();
-		
-		for (Lint x = 0; x < DESK_USER_COUNT; x++)
-		{
-			if (NULL != desk->m_user[x])
-			{
-				tmpMsg.m_user[x] = desk->m_user[x]->GetUserDataId();
-			}
-		}
-
-		LLOG_DEBUG("Error, gonghuiId=%d,roomId=%d,roomState=%d.", tmpMsg.m_gonghuiId, tmpMsg.m_roomId, tmpMsg.m_roomState);
-
-		gWork.SendToLogicManager(tmpMsg);
+		broadcastGonghuiChange(nDeskID, desk);
 	}
 
 	return ret.m_errorCode;
 }
 
+Lint RoomVip::convertPlayerNumberToType(Lint playerNumber)
+{
+	return (playerNumber == 3) ? 407 : 408;
+}
+
+Lint RoomVip::convertBaseScoreToType(Lint baseScore)
+{
+	if (1 == baseScore)
+	{
+		return 400;
+	}
+	else if (2 == baseScore)
+	{
+		return 401;
+	}
+	else if (4 == baseScore)
+	{
+		return 402;
+	}
+	return 400;
+}
+
+bool RoomVip::broadcastGonghuiChange(Lint deskId, Desk *desk)
+{
+	// 玩家进入工会房间，需要广播，同时更新LogicManager中的缓存
+	LMsgL2LMGGonghuiDeskChange tmpMsg;
+	tmpMsg.m_roomId = deskId;
+	tmpMsg.m_gonghuiId = desk->getDeskGonghuiId();
+	tmpMsg.m_roomState = desk->getDeskState();
+	tmpMsg.m_playType = convertPlayerNumberToType(desk->GetPlayerCapacity());
+	tmpMsg.m_baseScore = convertBaseScoreToType(desk->getBaseScore());
+	tmpMsg.m_roomType = desk->getCardType();
+	tmpMsg.m_playNum = desk->m_vip->m_curCircle + 1;
+
+	for (Lint x = 0; x < DESK_USER_COUNT; x++)
+	{
+		if (NULL != desk->m_user[x])
+		{
+			tmpMsg.m_user[x] = desk->m_user[x]->GetUserDataId();
+		}
+		tmpMsg.m_score[x] = desk->m_vip->m_score[x];
+	}
+
+	LLOG_DEBUG("Error, gonghuiId=%d,roomId=%d,roomState=%d.", tmpMsg.m_gonghuiId, tmpMsg.m_roomId, tmpMsg.m_roomState);
+
+	gWork.SendToLogicManager(tmpMsg);
+	return true;
+}
 
 bool RoomVip::LeaveToVipDesk(LMsgC2SLeaveDesk* pMsg, User* pUser)
 {
@@ -1045,7 +1075,7 @@ bool RoomVip::LeaveToVipDesk(LMsgC2SLeaveDesk* pMsg, User* pUser)
 	pUser->Send(send);
 
 	//房主
-	if(desk->GetVip()->GetOwerId() ==  pUser->GetUserDataId())
+	if(desk->GetVip()->GetOwerId() ==  pUser->GetUserDataId() && desk->getDeskGonghuiId() == 0)
 	{
 		//房间保留，不做任何操作
 		gWork.HanderUserLogout(pUser->getUserGateID() , pUser->m_userData.m_unioid);
@@ -1054,6 +1084,12 @@ bool RoomVip::LeaveToVipDesk(LMsgC2SLeaveDesk* pMsg, User* pUser)
 	{
 		desk->GetVip()->RemoveUser(pUser->GetUserDataId());
 		desk->OnUserOutRoom(pUser);
+	}
+
+	// 退出房间，如果是工会房间，需要广播消息
+	if (0 != desk->getDeskGonghuiId())
+	{
+		broadcastGonghuiChange(desk->GetDeskId(), desk);
 	}
 	return true;
 }

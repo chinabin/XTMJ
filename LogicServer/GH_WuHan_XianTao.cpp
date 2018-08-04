@@ -1485,7 +1485,7 @@ void GH_WuHan_XianTao::OnGameOver(Lint result,Lint bombpos)
 	}
 
 	m_desk->HanderGameOver(result);
-
+	
 	//////////////////////////////////////////////////////////////////////////
 }
 

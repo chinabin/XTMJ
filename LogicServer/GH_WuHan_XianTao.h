@@ -33,6 +33,8 @@ public:
 protected:
 	void DeakCard();
 
+	void DelCardCount(Lint userId, Lint cardType, Lint count, Lint operType, Lstring admin);
+
 	void CheckStartPlayCard();
 
 	//摸牌

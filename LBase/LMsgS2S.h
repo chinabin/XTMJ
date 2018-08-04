@@ -1689,9 +1689,10 @@ struct LMsgL2LMGGonghuiDeskChange : public LMsg
 	Lint m_baseScore;  // 底分类型
 	Lint m_roomType;   // 房间类型，多少局
 	Lint m_roomId;     // 工会房间ID
-	Lint m_roomState;  // 工会房间状态，为0表示空闲，1表示准备（新用户加入房间），2表示Playing，3表示结束
+	Lint m_roomState;  // 工会房间状态，为0表示空闲，1表示准备（新用户加入房间），2表示Playing，3表示房间正常结束，4表示房间解散
 	Lint m_user[4]; // 进入房间的用户，当roomState为2时使用，更新数据库数据
 	Lint m_score[4];   // 当房间局数结束时，记录总分数
+	Lint m_playNum;
 
 	LMsgL2LMGGonghuiDeskChange() : LMsg(MSG_L_2_LMG_GONGHUIDESK_CHANGE)
 	{
@@ -1706,6 +1707,7 @@ struct LMsgL2LMGGonghuiDeskChange : public LMsg
 			m_user[i] = 0;
 			m_score[i] = 0;
 		}
+		m_playNum = 0;
 	}
 
 	virtual bool Read(LBuff& buff)
@@ -1727,6 +1729,7 @@ struct LMsgL2LMGGonghuiDeskChange : public LMsg
 		{
 			buff.Read(m_score[i]);
 		}
+		buff.Read(m_playNum);
 		return true;
 	}
 
@@ -1749,6 +1752,7 @@ struct LMsgL2LMGGonghuiDeskChange : public LMsg
 		{
 			buff.Write(m_score[i]);
 		}
+		buff.Write(m_playNum);
 		return true;
 	}
 

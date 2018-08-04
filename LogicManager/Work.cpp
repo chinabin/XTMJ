@@ -674,8 +674,8 @@ bool Work::CreateGonghuiRoom(Lint gonghuiId, Lint roomType, Lint playType, Lint 
 	PaiJuInfo paijuInfo;
 	paijuInfo.m_roomId = roomId;
 	paijuInfo.m_roomCounts = roomType;
-	paijuInfo.m_roomType = send.m_playType;
-	paijuInfo.m_roomScore = send.m_baseScore;
+	paijuInfo.m_roomType = playType;
+	paijuInfo.m_roomScore = baseScoreType;
 	paijuInfo.m_roomState = "IDLE";
 	paijuInfo.m_user1 = "";
 	paijuInfo.m_user2 = "";

@@ -147,6 +147,8 @@ public:
 
 	void			HanderGameOver(Lint result);
 
+	void            DelCardCount(Lint userId, Lint cardType, Lint count, Lint operType, Lstring admin);
+
 	void			HanderAddCardCount(Lint pos, Lint CardNum, CARDS_OPER_TYPE AddType, Lstring admin);
 
 	//////////////////////////////////////////////////////////////////////////
@@ -219,6 +221,16 @@ public:
 		return m_gonghuiId;
 	}
 
+	inline void setDeskOwner(Lint userId)
+	{
+		m_deskOwner = userId;
+	}
+
+	inline Lint getDeskOwner()
+	{
+		return m_deskOwner;
+	}
+
 	inline Lint getBaseScore()
 	{
 		return m_baseScore;
@@ -278,6 +290,7 @@ private:
 	Lint			m_gameType;						// 商丘麻将 周口麻将 等等
 	Lint			m_cardType;						// 4局 8局 等等
 	Lint            m_gonghuiId;                    // 工会id
+	Lint            m_deskOwner;                    // 工会房间owner，即会长ID
 };
 
 typedef std::map<DWORD,Desk*> DeskMap;

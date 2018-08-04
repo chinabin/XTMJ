@@ -277,7 +277,7 @@ void UserManager::setGonghuiInfo(std::vector<Gonghui> gonghuiInfo)
 void UserManager::updateGonghuiPaiju(Lint gonghuiId, Lint roomId, Lstring roomState, Lint user[4])
 {
 	LLOG_ERROR("update paiju, gonghuiId:%d, roomState=%s, roomId=%d, user=%d,%d,%d,%d.", gonghuiId, roomState.c_str(), roomId, user[0], user[1], user[2], user[3]);
-
+	
 	std::map<Lint, Gonghui>::iterator iter = m_gonghuiInfo.find(gonghuiId);
 	if (iter != m_gonghuiInfo.end())
 	{
@@ -288,7 +288,27 @@ void UserManager::updateGonghuiPaiju(Lint gonghuiId, Lint roomId, Lstring roomSt
 		{
 			if (paijuIter->m_roomId == roomId)
 			{
-				paijuIter->m_roomState = roomState;
+				if ("1" == roomState)
+				{
+					paijuIter->m_roomState = "WAITING";
+				}
+				else if ("2" == roomState)
+				{
+					paijuIter->m_roomState = "PLAYING";
+				}
+				else if ("3" == roomState)
+				{
+					paijuIter->m_roomState = "END";
+				}
+				else if ("4" == roomState)
+				{
+					paijuIter->m_roomState = "Abort";
+				}
+				else
+				{
+					paijuIter->m_roomState = "IDLE";
+				}
+				
 				paijuIter->m_user1 = getUserNameById(user[0]);
 				paijuIter->m_user2 = getUserNameById(user[1]);
 				paijuIter->m_user3 = getUserNameById(user[2]);
@@ -513,6 +533,20 @@ Lint UserManager::addGonghuiUser(Lint gonghuiId, Lint userId)
 		return -7;
 	}
 	return 0;
+}
+
+Lint UserManager::delGonghui(Lint gonghuiId)
+{
+	m_gonghuiInfo.erase(gonghuiId);
+	m_gonghuiApplyInfo.erase(gonghuiId);
+	if (gGonghuiManager.deleteGonghui(gonghuiId))
+	{
+		LLOG_ERROR("delete gonghui:%d success.", gonghuiId);
+		return 0;
+	}
+
+	LLOG_ERROR("delete gonghui:%d failed.", gonghuiId);
+	return -11;
 }
 
 Lint UserManager::delGonghuiUser(Lint gonghuiId, Lint userId)

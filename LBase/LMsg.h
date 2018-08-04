@@ -248,7 +248,7 @@ enum LMSG_ID
 	MSG_C_2_S_GONGHUI_ROOMOP = 186, // 会长申请创建、删除工会策略
 	//MSG_C_2_S_GONGHUI_DELETEROOM = 187,  // 删除工会房间策略
 
-	MSG_C_2_S_GONGHUI_QUERYDESK = 188, // 查询工会房间信息
+	MSG_C_2_S_GONGHUI_QUERYDESK = 188, // 查询工会房间信息(已结算的)
 	MSG_S_2_C_GONGHUI_QUERYDESK = 189,
 
 	MSG_LMG_2_L_CREATE_GONGHUIDESK = 190, // 创建工会房间
@@ -6268,7 +6268,9 @@ struct LMsgS2CGonghuiOPResult : public LMsgSC
 	// 4申请加入工会
 	// 5创建工会房间策略
 	// 6删除工会房间策略
+	// 7解散工会
 	Lint    m_opType; 
+	// 0  操作成功
 	// -1 工会不存在
 	// -2 用户未申请加入工会
 	// -3 工会房间策略非法
@@ -6277,6 +6279,9 @@ struct LMsgS2CGonghuiOPResult : public LMsgSC
 	// -6 用户已经是工会成员
 	// -7 新增用户到数据库失败
 	// -8 从数据库中删除用户失败
+	// -9 删除工会用户时，不能删除会长
+	// -10 非工会会长不能解散工会
+	// -11 解散工会失败
 	Lint    m_errorCode; // 操作结果： 0成功，其他失败
 
 	LMsgS2CGonghuiOPResult() : LMsgSC(MSG_S_2_C_GONGHUI_OPRESULT)
@@ -6309,7 +6314,8 @@ struct LMsgS2CGonghuiOPResult : public LMsgSC
 struct LMsgC2SGonghuiUserOp : public LMsgSC
 {
 	Lstring m_strUserUUID;  // 客户端不需要填充 服务器内部转发使用
-	Lint	m_opType;   // 1 同意用户加入工会,2 拒绝用户加入工会,3 从工会剔除用户
+	// 1 同意用户加入工会,2 拒绝用户加入工会,3 从工会剔除用户,7 解散工会
+	Lint	m_opType;
 	Lint    m_gonghuiId;
 	Lint    m_userId;
 
@@ -6349,36 +6355,172 @@ struct LMsgC2SGonghuiUserOp : public LMsgSC
 struct LMsgC2SQueryGonghuiDesk : public LMsgSC
 {
 	Lstring m_strUserUUID;  // 客户端不需要填充 服务器内部转发使用
-	Lint	m_userId;
 	Lint    m_gonghuiId;
+	Lint    m_beginPos;    // 按照时间排序，查询多少条数据，起始和结束
+	Lint    m_endPos;
 
 	LMsgC2SQueryGonghuiDesk() : LMsgSC(MSG_C_2_S_GONGHUI_QUERYDESK)
 	{
-		m_userId = 0;
 		m_gonghuiId = 0;
+		m_beginPos = 0;
+		m_endPos = 0;
 	}
 
 	virtual bool Read(msgpack::object& obj)
 	{
 		ReadMapData(obj, NAME_TO_STR(m_strUserUUID), m_strUserUUID);
-		ReadMapData(obj, NAME_TO_STR(m_userId), m_userId);
 		ReadMapData(obj, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		ReadMapData(obj, NAME_TO_STR(m_beginPos), m_beginPos);
+		ReadMapData(obj, NAME_TO_STR(m_endPos), m_endPos);
 		return true;
 	}
 
 	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
 	{
-		WriteMap(pack, 4);
+		WriteMap(pack, 5);
 		WriteKeyValue(pack, "m_msgId", m_msgId);
 		WriteKeyValue(pack, "m_strUserUUID", m_strUserUUID);
-		WriteKeyValue(pack, NAME_TO_STR(m_userId), m_userId);
 		WriteKeyValue(pack, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		WriteKeyValue(pack, NAME_TO_STR(m_beginPos), m_beginPos);
+		WriteKeyValue(pack, NAME_TO_STR(m_endPos), m_endPos);
 		return true;
 	}
 
 	virtual LMsg* Clone()
 	{
 		return new LMsgC2SQueryGonghuiDesk();
+	}
+};
+
+struct RoomRecord
+{
+	Lint m_roomId;    // 房间ID
+	Lint m_gonghuiId; // 工会ID
+	Lint m_baseScore; // 牌局底分，400、401、402分别表示1、2、4分
+	Lint m_cardType;  // 局数,1-3分别表示4-8-10局
+	Lint m_playType;  // 407表示3人麻将，为408表示4人麻将
+	Lint m_playNums;  // 实际房间打的局数
+	Lstring m_roomState;  // 房间状态，正常结算，还是解散
+	Lint m_userId[4];
+	Lstring m_userName[4];
+	Lint m_score[4];
+	Lint m_playTime;
+
+	RoomRecord()
+	{
+		m_roomId = 0;
+		m_gonghuiId = 0;
+		m_baseScore = 0;
+		m_cardType = 0;
+		m_playType = 0;
+		m_playNums = 0;
+		m_roomState = "";
+		for (int i = 0; i < 4; i++)
+		{
+			m_score[i] = 0;
+			m_userId[i] = 0;
+			m_userName[i] = "";
+		}
+		m_playTime = 0;
+	}
+
+	MSGPACK_DEFINE(m_roomId, m_gonghuiId, m_baseScore, m_cardType, m_playType, m_playNums, m_roomState, m_userId, m_userName, m_score, m_playTime);
+
+	bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_roomId), m_roomId);
+		ReadMapData(obj, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		ReadMapData(obj, NAME_TO_STR(m_baseScore), m_baseScore);
+		ReadMapData(obj, NAME_TO_STR(m_cardType), m_cardType);
+		ReadMapData(obj, NAME_TO_STR(m_playType), m_playType);
+		ReadMapData(obj, NAME_TO_STR(m_playNums), m_playNums);
+		ReadMapData(obj, NAME_TO_STR(m_roomState), m_roomState);
+		//ReadMapData(obj, NAME_TO_STR(m_user), m_user);
+		//ReadMapData(obj, NAME_TO_STR(m_score), m_score);
+		return true;
+	}
+
+	bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteMap(pack, 11);
+		WriteKeyValue(pack, NAME_TO_STR(m_roomId), m_roomId);
+		WriteKeyValue(pack, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		WriteKeyValue(pack, NAME_TO_STR(m_baseScore), m_baseScore);
+		WriteKeyValue(pack, NAME_TO_STR(m_cardType), m_cardType);
+		WriteKeyValue(pack, NAME_TO_STR(m_playType), m_playType);
+		WriteKeyValue(pack, NAME_TO_STR(m_playNums), m_playNums);
+		WriteKeyValue(pack, NAME_TO_STR(m_roomState), m_roomState);
+
+		WriteKey(pack, "m_userId");
+		std::vector<Lint> vce;
+		for (Lint i = 0; i < 4; ++i)
+		{
+			vce.push_back(m_userId[i]);
+		}
+		WriteKey(pack, vce);
+
+		WriteKey(pack, "m_userName");
+		std::vector<Lstring> vce3;
+		for (Lint i = 0; i < 4; ++i)
+		{
+			vce3.push_back(m_userName[i]);
+		}
+		WriteKey(pack, vce3);
+		
+		WriteKey(pack, "m_score");
+		std::vector<Lint> vce2;
+		for (Lint i = 0; i < 4; ++i)
+		{
+			vce2.push_back(m_score[i]);
+		}
+		WriteKey(pack, vce2);
+
+		WriteKeyValue(pack, NAME_TO_STR(m_playTime), m_playTime);
+		return true;
+	}
+};
+
+struct LMsgS2CQueryGonghuiDesk : public LMsgSC
+{
+	Lstring m_strUserUUID;  // 客户端不需要填充 服务器内部转发使用
+	Lint    m_gonghuiId;
+	Lint    m_deskCounts;  // 返回当前查询的桌子数量，如果比实际查询要求的少，说明已经查询完
+	std::vector<RoomRecord> m_records;
+
+	LMsgS2CQueryGonghuiDesk() : LMsgSC(MSG_S_2_C_GONGHUI_QUERYDESK)
+	{
+		m_gonghuiId = 0;
+		m_deskCounts = 0;
+	}
+
+	virtual bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_strUserUUID), m_strUserUUID);
+		ReadMapData(obj, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		ReadMapData(obj, NAME_TO_STR(m_deskCounts), m_deskCounts);
+		return true;
+	}
+
+	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteMap(pack, 5);
+		WriteKeyValue(pack, "m_msgId", m_msgId);
+		WriteKeyValue(pack, "m_strUserUUID", m_strUserUUID);
+		WriteKeyValue(pack, NAME_TO_STR(m_gonghuiId), m_gonghuiId);
+		WriteKeyValue(pack, NAME_TO_STR(m_deskCounts), m_deskCounts);
+		//WriteKeyValue(pack, NAME_TO_STR(m_records), m_records);
+		WriteKey(pack, NAME_TO_STR(m_records));
+		WriteArray(pack, m_records.size());
+		for (Lint i = 0; i < m_records.size(); i++)
+		{
+			m_records[i].Write(pack);
+		}
+		return true;
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgS2CQueryGonghuiDesk();
 	}
 };
 

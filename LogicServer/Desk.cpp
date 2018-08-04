@@ -1229,15 +1229,27 @@ void Desk::HanderGameOver(Lint result)
 			}
 			else
 			{
-				m_user[0]->DelCardCount(m_cardType, count, CARDS_OPER_TYPE_CREATE_ROOM,"system");
+				if (0 == m_gonghuiId)
+				{
+					m_user[0]->DelCardCount(m_cardType, count, CARDS_OPER_TYPE_CREATE_ROOM, "system");
+				}
+				else
+				{
+					DelCardCount(m_deskOwner, m_cardType, count, CARDS_OPER_TYPE_CREATE_ROOM, "system");
+				}
 			}
 		}
 	}
 
+	LLOG_ERROR("game info, maxCircle=%d, curCircle=%d,isReset=%d.", m_vip->m_maxCircle, m_vip->m_curCircle, m_vip->m_reset);
 	if(m_vip->isNormalEnd())
 	{
 		if(m_deskType == DeskType_Common)
 		{
+			// 设置房间状态为正常结束，发消息给LogicManager，方便创建房间
+			//m_deskState = 3;
+			//gRoomVip.broadcastGonghuiChange(m_id, this);
+
 			LMsgL2LDBSaveCRELog log;
 			log.m_strUUID = m_user[0]->m_userData.m_unioid;
 			log.m_deskID = this->m_id;
@@ -1248,19 +1260,51 @@ void Desk::HanderGameOver(Lint result)
 				log.m_id[i] = m_user[i]->m_userData.m_id;
 			}
 			gWork.SendMsgToDb(log);
+
 		}
+
 	}
 
 	if(m_vip->isEnd())
 	{
+		// 设置房间状态为解散
+		if (m_vip->m_curCircle == m_vip->m_maxCircle)
+		{
+			// 房间正常结算
+			m_deskState = 3;
+			gRoomVip.broadcastGonghuiChange(m_id, this);
+		}
+		else
+		{
+			m_deskState = 4;
+			gRoomVip.broadcastGonghuiChange(m_id, this);
+		}
+
 		m_vip->SendEnd();
 		m_vip->m_desk = NULL;
 		ClearUser();
 		SetDeskFree();
 		SetVip(NULL);
 		ResetClear();
+
 	}
 	SpecialCardClear();
+}
+
+void Desk::DelCardCount(Lint userId, Lint cardType, Lint count, Lint operType, Lstring admin)
+{
+	LLOG_INFO("User::DelCardCount userId=%d,type=%d,count=%d,operType=%d", userId, cardType, count, operType);
+
+	// TODO 如果检测用户存在，则直接扣除房卡，如果检测用户不在，则由LogicManager负责扣除房卡
+	LMsgL2LMGModifyCard msg;
+	msg.admin = admin;
+	msg.cardType = cardType;
+	msg.cardNum = count;
+	msg.isAddCard = 0;
+	msg.operType = operType;
+	msg.m_userid = userId;
+	msg.m_strUUID = userId;
+	gWork.SendToLogicManager(msg);
 }
 
 void Desk::HanderAddCardCount(Lint pos, Lint CardNum, CARDS_OPER_TYPE AddType, Lstring admin)
