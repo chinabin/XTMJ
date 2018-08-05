@@ -260,6 +260,9 @@ enum LMSG_ID
 	MSG_C_2_S_GONGHUI_QUERYAPPLYINFO = 193, // 查询申请加入工会信息
 	MSG_S_2_C_GONGHUI_QUERYAPPLYINFO = 194,
 
+	MSG_C_2_S_QUERYDESK_HISTORY      = 195, // 查询桌子的打牌记录
+	MSG_S_2_C_QUERYDESK_HISTORY      = 196, // 返回桌子的打牌记录
+
 	// 活动 200 - 300
 	MSG_S_2_C_ACTIVITY_INFO = 200,			//通用的活动内容 推动给客户端
 	MSG_C_2_S_ACTIVITY_WRITE_PHONE = 201,	//填写活动相关的电话号码
@@ -2645,6 +2648,7 @@ struct LMsgS2CGameOver:public LMsgSC
 	Lint		m_dmgang[4];//被点杠数量
 
 	std::vector<ScoreInfo> m_scoreInfo[4];		//得分信息
+	CardValue   m_lastCard;  // 最后一张牌
 
 	LMsgS2CGameOver() :LMsgSC(MSG_S_2_C_GAME_OVER)
 	{
@@ -2679,7 +2683,7 @@ struct LMsgS2CGameOver:public LMsgSC
 
 	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
 	{
-		WriteMap(pack, 37);
+		WriteMap(pack, 38);
 		WriteKeyValue(pack, NAME_TO_STR(m_msgId), m_msgId);
 		WriteKeyValue(pack, NAME_TO_STR(m_result), m_result);
 		WriteKeyValue(pack, NAME_TO_STR(m_end), m_end);
@@ -2852,7 +2856,7 @@ struct LMsgS2CGameOver:public LMsgSC
 		WriteKeyValue(pack, NAME_TO_STR(m_hucards3), m_hucards[2]);
 		WriteKeyValue(pack, NAME_TO_STR(m_hucards4), m_hucards[3]);
 		WriteKeyValue(pack, NAME_TO_STR(m_bird_infos), m_bird_infos);
-
+		WriteKeyValue(pack, NAME_TO_STR(m_lastCard), m_lastCard);
 		return true;
 	}
 
@@ -6676,6 +6680,92 @@ struct LMsgC2SQueryApplyInfo : public LMsgSC
 	virtual LMsg* Clone()
 	{
 		return new LMsgC2SQueryApplyInfo();
+	}
+};
+
+struct LMsgC2SQueryDeskHistory : public LMsgSC
+{
+	Lstring m_strUserUUID;  // 客户端不需要填充 服务器内部转发使用
+	Lint    m_deskId;
+
+	LMsgC2SQueryDeskHistory() : LMsgSC(MSG_C_2_S_QUERYDESK_HISTORY)
+	{
+		m_deskId = 0;
+	}
+
+	virtual bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_strUserUUID), m_strUserUUID);
+		ReadMapData(obj, NAME_TO_STR(m_deskId), m_deskId);
+		return true;
+	}
+
+	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteMap(pack, 3);
+		WriteKeyValue(pack, "m_msgId", m_msgId);
+		WriteKeyValue(pack, "m_strUserUUID", m_strUserUUID);
+		WriteKeyValue(pack, NAME_TO_STR(m_deskId), m_deskId);
+		return true;
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgC2SQueryDeskHistory();
+	}
+};
+
+struct LMsgS2CQueryDeskHistory : public LMsgSC
+{
+	Lint    m_opRet;        // 返回结果，0成功，-1获取数据失败
+	Lstring m_strUserUUID;  // 客户端不需要填充 服务器内部转发使用
+	Lint    m_matchSize;
+	VipLog  m_match[20];
+
+	LMsgS2CQueryDeskHistory() : LMsgSC(MSG_S_2_C_QUERYDESK_HISTORY)
+	{
+		m_opRet = 0;
+		m_matchSize = 0;
+	}
+
+	virtual bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_strUserUUID), m_strUserUUID);
+		ReadMapData(obj, NAME_TO_STR(m_opRet), m_opRet);
+		ReadMapData(obj, NAME_TO_STR(m_matchSize), m_matchSize);
+		return true;
+	}
+
+	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteMap(pack, 5);
+		WriteKeyValue(pack, "m_msgId", m_msgId);
+		WriteKeyValue(pack, "m_strUserUUID", m_strUserUUID);
+		WriteKeyValue(pack, NAME_TO_STR(m_opRet), m_opRet);
+		WriteKeyValue(pack, NAME_TO_STR(m_matchSize), m_matchSize);
+		
+		WriteKey(pack, "m_match");
+		WriteArray(pack, m_matchSize);
+		for (Lint k = 0; k < m_matchSize; ++k)
+		{
+			WriteMap(pack, 3);
+			WriteKeyValue(pack, "m_time", m_match[k].m_time);
+			WriteKeyValue(pack, "m_videoId", m_match[k].m_videoId);
+
+			std::vector<Lint> vec;
+			for (Lint n = 0; n < 4; ++n)
+			{
+				vec.push_back(m_match[k].m_score[n]);
+			}
+			WriteKey(pack, "m_score");
+			WriteKey(pack, vec);
+		}
+		return true;
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgS2CQueryDeskHistory();
 	}
 };
 #endif

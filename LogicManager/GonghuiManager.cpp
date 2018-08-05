@@ -787,3 +787,47 @@ bool GonghuiManager::deleteGonghui(Lint gonghuiId)
 	}
 	return true;
 }
+
+bool GonghuiManager::getDeskHistoryInfo(Lint deskId, Lstring& data)
+{
+	LDBSession dbSession2;
+	if (!dbSession2.Init(gConfig.GetDbHost(), gConfig.GetDbUser(), gConfig.GetDbPass(), "mj_logic", "utf8mb4", gConfig.GetDbPort()))
+	{
+		LLOG_ERROR("Fail to init db session.");
+		return false;
+	}
+
+	std::stringstream sql2;
+	sql2 << "SELECT Data FROM log WHERE DeskId = '"<< deskId <<"'";
+	LLOG_ERROR("sqlstr=%s.", sql2.str().c_str());
+
+	if (mysql_real_query(dbSession2.GetMysql(), sql2.str().c_str(), sql2.str().size()))
+	{
+		LLOG_ERROR("GonghuiManager::getDeskHistoryInfo sql error %s", mysql_error(dbSession2.GetMysql()));
+		return false;
+	}
+
+	MYSQL_RES* res2 = mysql_store_result(dbSession2.GetMysql());
+	if (res2 == NULL)
+	{
+		LLOG_ERROR("Fail to getDeskHistoryInfo result. Error = %s", mysql_error(dbSession2.GetMysql()));
+		return false;
+	}
+
+	MYSQL_ROW row2 = mysql_fetch_row(res2);
+	if (!row2)
+	{
+		mysql_free_result(res2);
+		return false;
+	}
+
+	while (row2)
+	{
+		data = *row2++;
+		row2 = mysql_fetch_row(res2);
+	}
+
+	mysql_free_result(res2);
+
+	return true;
+}

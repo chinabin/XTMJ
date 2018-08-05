@@ -30,6 +30,7 @@ public:
 
 	void OnGameOver(Lint result,Lint bombpos)override;
 
+	Lint getCurPos();
 protected:
 	void DeakCard();
 

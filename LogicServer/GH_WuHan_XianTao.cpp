@@ -192,12 +192,6 @@ void GH_WuHan_XianTao::SetDeskPlay()
 			m_pt_feng = true;
 		else
 			m_pt_feng = false;
-
-		if(m_playtype.checkPlayType(PT_ZK_ZHUANGDOUBLE))
-			m_pt_zhuangDouble[m_zhuangpos] = 2;
-
-		if(m_playtype.checkPlayType(PT_ZK_ZHUANGHUGANG))
-			m_zhuangHuGang[m_zhuangpos] = 1;
 	}
 	m_pt_hun = true;
 	m_pt_feng = false;
@@ -607,11 +601,11 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 			int score = 0;
 			for (int i = 0; i < m_desk->GetPlayerCapacity(); ++i)
 			{
+				LLOG_DEBUG("pos=%d,baseScore=%d.", i, m_baseScore[i]);
 				if (i == m_curPos)
 				{
 					continue;
 				}
-				
 				int tmpScore = doubleSize * m_desk->m_baseScore * m_baseScore[i] * m_baseScore[m_curPos];
 				sendMsg.m_addScore[i] = -tmpScore;
 				m_totalScore[i] += -tmpScore;
@@ -1242,28 +1236,7 @@ void GH_WuHan_XianTao::OnGameOver(Lint result,Lint bombpos)
 		gold[i] = m_totalScore[i];
 	}
 	LLOG_DEBUG("game over, score=%d,%d,%d,%d.", gold[0], gold[1], gold[2], gold[3]);
-	/*if (WIN_DISS != result && WIN_NONE != result)//自摸或者点炮
-	{
-		calcUserScore(result, gold, bombCount, winPos);
-		for(Lint i = 0 ; i < DESK_USER_COUNT; ++i)
-		{
-			mgang[i] += m_minggang[i];
-			mgang[i] += m_diangang[i];
-		}
-	}
-	else if(WIN_NONE == result)//荒庄
-	{
-		if(m_pt_pao && m_paoTieGang[m_zhuangpos])//m_playtype.hasHuangzhuang())//是否不慌杠计算杠分
-		{
-			GetGangSocore(gold);
-
-			for(Lint i = 0 ; i < DESK_USER_COUNT; ++i)
-			{
-				mgang[i] += m_minggang[i];
-				mgang[i] += m_diangang[i];
-			}
-		}
-	}*/
+	
 	Lint zhuangPos = m_zhuangpos;
 	//计算庄
 	if (result == WIN_ZIMO)
@@ -1278,62 +1251,15 @@ void GH_WuHan_XianTao::OnGameOver(Lint result,Lint bombpos)
 				break;
 			}
 		}
-
-		// 带跑玩法中 如果玩家没有连庄 需要轮流坐庄
-		if(m_pt_pao)
-		{
-			if(m_zhuangpos != m_paoZhuangPos)
-			{
-				++m_paoZhuangPos;
-				if(m_paoZhuangPos>=DESK_USER_COUNT)
-					m_paoZhuangPos = 0;
-				m_zhuangpos = m_paoZhuangPos;
-
-				m_changeZhuang = true;
-				++m_zhuangChangeCount;
-			}
-		}
 	}
 	else if (result == WIN_BOMB)
 	{
-		//winpos[m_beforePos] = WIN_SUB_ABOMB;		//置点炮位 带完善这里
-// 		if (bombCount > 1)
-// 			m_zhuangpos = bombpos;
-// 		else
-// 		{
-// 			m_zhuangpos = m_curPos;
-//
-// 			for(Lint i = 0 ; i < DESK_USER_COUNT; ++i)
-// 			{
-// 				if(winPos[i] == 1)
-// 				{
-// 					m_zhuangpos = i;
-// 					break;
-// 				}
-// 			}
-// 		}
-
 		for(Lint i = 0 ; i < DESK_USER_COUNT; ++i)
 		{
 			if(winPos[i] == 1)
 			{
 				m_zhuangpos = i;
 				break;
-			}
-		}
-
-		// 带跑玩法中 如果玩家没有连庄 需要轮流坐庄
-		if(m_pt_pao)
-		{
-			if(m_zhuangpos != m_paoZhuangPos)
-			{
-				++m_paoZhuangPos;
-				if(m_paoZhuangPos>=DESK_USER_COUNT)
-					m_paoZhuangPos = 0;
-				m_zhuangpos = m_paoZhuangPos;
-
-				m_changeZhuang = true;
-				++m_zhuangChangeCount;
 			}
 		}
 	}
@@ -1459,11 +1385,16 @@ void GH_WuHan_XianTao::OnGameOver(Lint result,Lint bombpos)
 	Lint m_checkTing[DESK_USER_COUNT] = {0};
 	m_desk->m_vip->AddLog(m_desk->m_user, gold, m_playerHuInfo, zhuangPos, m_angang, mgang, m_video.m_Id, m_checkTing, m_pt_pao?m_zhuangChangeCount==4 : true);
 
-	if(m_zhuangChangeCount == 4)
-		m_zhuangChangeCount = 0;
+	//if(m_zhuangChangeCount == 4)
+	//	m_zhuangChangeCount = 0;
 
 	//是否最后一局
 	over.m_end = m_desk->m_vip->isEnd()?1:0;
+	CardValue* lastCard = m_deskCard.front();
+	CardValue tmpLastCard;
+	tmpLastCard.m_color = lastCard->m_color;
+	tmpLastCard.m_number = lastCard->m_number;
+	over.m_lastCard = tmpLastCard;
 	m_desk->BoadCast(over);
 
 	if(result != WIN_DISS)
@@ -1487,6 +1418,11 @@ void GH_WuHan_XianTao::OnGameOver(Lint result,Lint bombpos)
 	m_desk->HanderGameOver(result);
 	
 	//////////////////////////////////////////////////////////////////////////
+}
+
+Lint GH_WuHan_XianTao::getCurPos()
+{
+	return m_curPos;
 }
 
 void GH_WuHan_XianTao::DeakCard()
@@ -1543,12 +1479,10 @@ void GH_WuHan_XianTao::DeakCard()
 	if (m_desk->GetPlayerCapacity() != DESK_USER_COUNT)
 	{
 		m_cardPos1 = L_Rand(0, 2);
-		m_zhuangpos = L_Rand(0, 2);
 	}
 	else
 	{
 		m_cardPos1 = L_Rand(0, 3);
-		m_zhuangpos = L_Rand(0, 3);
 	}
 	m_cardPos2 = L_Rand(1, 6);
 	m_cardPos3 = L_Rand(1, 6);
@@ -1655,6 +1589,7 @@ void GH_WuHan_XianTao::SetPlayIng(Lint pos,bool needGetCard,bool gang, bool need
 	{
 		LLOG_INFO("Desk::SetPlayIng huangzhuang game over");
 		OnGameOver(WIN_NONE, INVAILD_POS);
+		
 		return;
 	}
 	if (m_curPos != pos)
@@ -2913,7 +2848,7 @@ bool GH_WuHan_XianTao::hasFourLaizi(Lint pos)
 
 	for (Lint i = 0; i < m_outCard[pos].size(); i++)
 	{
-		Card *tmpOutCard = m_handCard[pos][i];
+		Card *tmpOutCard = m_outCard[pos][i];
 		if (tmpOutCard->m_color == m_ghostCardReal[0].m_color && tmpOutCard->m_number == m_ghostCardReal[0].m_number)
 		{
 			laiziCount++;

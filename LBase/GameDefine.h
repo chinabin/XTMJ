@@ -58,6 +58,9 @@ enum DESK_STATE
 	DESK_FREE =		0,	//桌子空闲状态
 	DESK_WAIT,			//桌子等待状态
 	DESK_PLAY,			//正在游戏中
+	DESK_END,           //正常打完接结束
+	DESK_ABORT,         //桌子结算
+	DESK_GONGHUI_WAIT   //工会桌子等待状态，超过10秒钟未启动，则强制启动
 	//	DESK_COUNT_RESULT,	//正在结算中
 	//	DESK_RESET_ROOM		//正在申请解散房间中
 };

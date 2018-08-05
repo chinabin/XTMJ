@@ -107,13 +107,60 @@ void Desk::Tick(LTime& curr)
 
 	CheckAutoPlayCard();
 
+	if (m_gonghuiId != 0)
+	{
+		if (m_vip != NULL)
+		{
+			// TOOD 检测DESK_FREE状态下，超过10秒钟必须开始
+			if (0 != m_vip->m_curCircle && m_deskState == DESK_WAIT)
+			{
+				LTime curTime;
+				Lint timeDiff = curTime.Secs() - m_deskWaitTime;
+				if (timeDiff >= 10)
+				{
+					// 自动开始牌局
+					for (int i = 0; i < m_iPlayerCapacity; ++i)
+					{
+						m_readyState[i] = 1;
+					}
+					CheckGameStart();
+				}
+			}
+			// TODO 检测DESK_PLAY状态下，超过600秒房间强制解散
+			if (m_deskState == DESK_PLAY)
+			{
+				LTime curTime;
+				Lint timeDiff = curTime.Secs() - m_deskLastPlayTime;
+				
+				if (timeDiff >= 600)
+				{
+					for (int i = 0; i < m_iPlayerCapacity; ++i)
+					{
+						m_reset[i] = 1;
+					}
+					// TODO 自动解散房间
+					m_resetTime = m_deskLastPlayTime;
+					std::stringstream systemUser;
+					systemUser << "system_" << mGameHandler->getCurPos();
+					m_resetUser = systemUser.str();
+					LMsgC2SSelectResetDesk *resutMsg = new LMsgC2SSelectResetDesk();
+					resutMsg->m_pos = 0;
+					resutMsg->m_flag = 1;
+					LLOG_DEBUG("resetUser:%s,Send msg to deduct room, deskId=%d.", m_resetUser.c_str(), m_gonghuiId);
+					HanderSelectResutDesk(m_user[0], resutMsg);
+					delete resutMsg;
+				}
+			}
+		}
+	}
+
 	if(m_timeDeskCreate && m_deskState == DESK_WAIT)	//如果超过8小时还没有开始过就进行解散
 	{
 		if(m_vip == NULL || !m_vip->IsBegin())	//如果没有赋值或者没有开始过
 		{
 			LTime cur;
 			Lint iInterval = cur.Secs() - m_timeDeskCreate;
-			if(iInterval >= (8 * 60 * 60))
+			if(iInterval >= (8 * 60 * 60) && m_gonghuiId == 0)
 			{
 				LLOG_ERROR("The desk(%d) doesn't begin beyond 8 hours", m_id);
 				ResetEnd();
@@ -558,6 +605,8 @@ void Desk::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 	if (mGameHandler)
 	{
 		mGameHandler->HanderUserPlayCard(pUser, msg);
+		LTime cur;
+		m_deskLastPlayTime = cur.Secs();
 	}
 }
 
@@ -961,6 +1010,8 @@ void Desk::SetDeskWait()
 {
 	memset(m_readyState, 0, sizeof(m_readyState));
 	m_deskState = DESK_WAIT;
+	LTime cur;
+	m_deskWaitTime = cur.Secs();
 }
 
 void Desk::OnDeskWait()
@@ -1001,6 +1052,8 @@ void Desk::CheckGameStart()
 	if(mGameHandler)
 	{
 		mGameHandler->SetDeskPlay();
+		LTime curTime;
+		m_deskLastPlayTime = curTime.Secs();
 	}
 	else
 	{
@@ -1267,17 +1320,20 @@ void Desk::HanderGameOver(Lint result)
 
 	if(m_vip->isEnd())
 	{
-		// 设置房间状态为解散
-		if (m_vip->m_curCircle == m_vip->m_maxCircle)
+		if (m_gonghuiId != 0)
 		{
-			// 房间正常结算
-			m_deskState = 3;
-			gRoomVip.broadcastGonghuiChange(m_id, this);
-		}
-		else
-		{
-			m_deskState = 4;
-			gRoomVip.broadcastGonghuiChange(m_id, this);
+			if (m_vip->m_curCircle == m_vip->m_maxCircle)
+			{
+				// 房间正常结算
+				m_deskState = 3;
+				gRoomVip.broadcastGonghuiChange(m_id, this);
+			}
+			else
+			{
+				// 设置房间状态为解散
+				m_deskState = 4;
+				gRoomVip.broadcastGonghuiChange(m_id, this);
+			}
 		}
 
 		m_vip->SendEnd();

@@ -1028,7 +1028,7 @@ bool RoomVip::broadcastGonghuiChange(Lint deskId, Desk *desk)
 	tmpMsg.m_playType = convertPlayerNumberToType(desk->GetPlayerCapacity());
 	tmpMsg.m_baseScore = convertBaseScoreToType(desk->getBaseScore());
 	tmpMsg.m_roomType = desk->getCardType();
-	tmpMsg.m_playNum = desk->m_vip->m_curCircle + 1;
+	tmpMsg.m_playNum = desk->m_vip->m_curCircle;
 
 	for (Lint x = 0; x < DESK_USER_COUNT; x++)
 	{

@@ -48,6 +48,7 @@ public:
 	void    HanderUserGonghuiOp(LMsgC2SGonghuiUserOp* msg);
 	void    HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg);
 	void    HanderUserQueryGonghuiDesk(LMsgC2SQueryGonghuiDesk* msg);
+	void    HanderGetDeskMatchInfo(LMsgC2SQueryDeskHistory* msg);
 
 	//玩家创建房间
 	void	HanderUserCreateDesk(LMsgC2SCreateDesk* msg);

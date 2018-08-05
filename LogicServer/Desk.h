@@ -257,6 +257,8 @@ private:
 	Lstring			m_resetUser;					//申请的玩家
 	Lint			m_resetTime;					//申请解算的时间
 	Lint			m_timeDeskCreate;				//桌子创建的时间
+	Lint            m_deskWaitTime;                 //桌子wait时间
+	Lint            m_deskLastPlayTime;             //桌子最后一次打牌时间
 public:
 	User*			m_user[DESK_USER_COUNT];		//玩家列表
 	Lint			m_readyState[DESK_USER_COUNT];	//玩家准备状态 

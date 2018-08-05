@@ -62,6 +62,8 @@ public:
 	std::set<Lint> getUserApplyInfoByGonghuiId(Lint gonghuiId);
 
 	bool deleteGonghui(Lint gonghuiId);
+
+	bool getDeskHistoryInfo(Lint deskId, Lstring& data);
 private:
 	std::map<Lint, Gonghui> m_gonghuiInfo; // 工会基本信息
 	std::map<Lint, std::vector<GonghuiUser>> m_gonghuiUser;  // 工会的所有用户信息

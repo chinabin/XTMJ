@@ -14,6 +14,7 @@ public:
     virtual bool startup(Desk *game) { return false; }
     virtual void shutdown(void) {}
     virtual void gameStart(void) {}
+	virtual int getCurPos() { return 0; }
 
 	virtual void			HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg){}
 	virtual void			HanderUserStartHu(User* pUser,LMsgC2SUserStartHuSelect* msg){}

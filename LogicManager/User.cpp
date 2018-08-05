@@ -7,6 +7,7 @@
 #include "RuntimeInfoMsg.h"
 #include "RLogHttp.h"
 #include "GonghuiManager.h"
+#include "LVipLog.h"
 
 User::User(LUser data, Lint gateId) : m_userData(data)
 {
@@ -280,6 +281,9 @@ void User::HanderMsg(LMsg* msg)
 {
 	switch (msg->m_msgId)
 	{
+	case MSG_C_2_S_QUERYDESK_HISTORY:
+		HanderGetDeskMatchInfo((LMsgC2SQueryDeskHistory*)msg);
+		break;
 	case MSG_C_2_S_GONGHUI_INFO:
 		HanderGetUserGonghuiInfo((LMsgC2SGonghuiInfo*)msg);
 		break;
@@ -648,6 +652,45 @@ void User::HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg)
 
 	opRet.m_errorCode = 0;
 	Send(opRet);
+}
+
+void User::HanderGetDeskMatchInfo(LMsgC2SQueryDeskHistory* msg)
+{
+	if (NULL == msg)
+	{
+		return;
+	}
+
+	LMsgS2CQueryDeskHistory send;
+	send.m_matchSize = 0;
+
+	Lstring matchData;
+	if (!gGonghuiManager.getDeskHistoryInfo(msg->m_deskId, matchData))
+	{
+		LLOG_ERROR("Error, failed to get match info, deskId=%d.", msg->m_deskId);
+		send.m_opRet = -1;
+	}
+	else
+	{
+		LVipLogItem item;
+		VipLog  match[20];
+		
+		item.FromString(matchData);
+
+		send.m_matchSize = item.m_log.size();
+		for (Lint j = 0; j < item.m_log.size(); ++j)
+		{
+			VipLog& l = match[j];
+			VipDeskLog* dl = item.m_log[j];
+			memcpy(l.m_score, dl->m_gold, sizeof(l.m_score));
+			l.m_time = dl->m_time;
+			l.m_videoId = dl->m_videoId;
+			send.m_match[j] = l;
+		}
+		
+	}
+
+	Send(send);
 }
 
 void User::HanderUserQueryGonghuiDesk(LMsgC2SQueryGonghuiDesk* msg)
