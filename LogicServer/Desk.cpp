@@ -379,6 +379,18 @@ void Desk::HanderSelectResutDesk(User* pUser,LMsgC2SSelectResetDesk* msg)
 			++refluse;
 	}
 
+	// 4人麻将有3人同意了，即可解散
+	if (m_iPlayerCapacity == 4 && agree == 3)
+	{
+		agree++;
+	}
+
+	// 3人麻将，如果有2人同意了，需要等待15秒，如果最后一个人同意了，直接解散，不同意15秒后自动解散
+	if (m_iPlayerCapacity == 3 && agree == 2)
+	{
+		m_resetTime = gWork.GetCurTime().Secs() + 15;
+	}
+
 	if (refluse >= 1)
 	{
 		for (Lint i = 0; i < m_iPlayerCapacity; ++i)
@@ -417,7 +429,7 @@ void Desk::HanderSelectResutDesk(User* pUser,LMsgC2SSelectResetDesk* msg)
 		//由于网络原因可能某些玩家已经准备但延迟收到解散命令,当有人拒绝的时候应该再次check一下
 		CheckGameStart();
 	}
-	else if (agree >= (m_iPlayerCapacity - 1))
+	else if (agree >= m_iPlayerCapacity)
 	{
 		for (Lint i = 0; i < m_iPlayerCapacity; ++i)
 		{
@@ -447,7 +459,9 @@ void Desk::HanderSelectResutDesk(User* pUser,LMsgC2SSelectResetDesk* msg)
 			}
 			m_user[i]->Send(send);
 		}
+
 		ResetEnd();
+		
 	}
 	else
 	{
