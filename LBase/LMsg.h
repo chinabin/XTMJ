@@ -263,6 +263,8 @@ enum LMSG_ID
 	MSG_C_2_S_QUERYDESK_HISTORY      = 195, // 查询桌子的打牌记录
 	MSG_S_2_C_QUERYDESK_HISTORY      = 196, // 返回桌子的打牌记录
 
+	MSG_S_2_C_GONHUISTATE_CHANGE     = 197, // 工会状态变更，比如新用户申请等
+
 	// 活动 200 - 300
 	MSG_S_2_C_ACTIVITY_INFO = 200,			//通用的活动内容 推动给客户端
 	MSG_C_2_S_ACTIVITY_WRITE_PHONE = 201,	//填写活动相关的电话号码
@@ -6766,6 +6768,34 @@ struct LMsgS2CQueryDeskHistory : public LMsgSC
 	virtual LMsg* Clone()
 	{
 		return new LMsgS2CQueryDeskHistory();
+	}
+};
+
+struct LMsgS2CGonghuiStateChagne : public LMsgSC
+{
+	std::vector<Lint> m_changeItems; // 每一个变更的项
+
+	LMsgS2CGonghuiStateChagne() : LMsgSC(MSG_S_2_C_GONHUISTATE_CHANGE)
+	{
+	}
+
+	virtual bool Read(msgpack::object& obj)
+	{
+		ReadMapData(obj, NAME_TO_STR(m_changeItems), m_changeItems);
+		return true;
+	}
+
+	virtual bool Write(msgpack::packer<msgpack::sbuffer>& pack)
+	{
+		WriteMap(pack, 2);
+		WriteKeyValue(pack, "m_msgId", m_msgId);
+		WriteKeyValue(pack, NAME_TO_STR(m_changeItems), m_changeItems);
+		return true;
+	}
+
+	virtual LMsg* Clone()
+	{
+		return new LMsgS2CGonghuiStateChagne();
 	}
 };
 #endif

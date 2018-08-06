@@ -30,6 +30,11 @@ public:
 
 	void OnGameOver(Lint result,Lint bombpos)override;
 
+	Lint getUserScore(Lint pos) override
+	{
+		return m_totalScore[pos];
+	}
+
 	Lint getCurPos();
 protected:
 	void DeakCard();

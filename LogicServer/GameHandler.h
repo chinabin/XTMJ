@@ -15,6 +15,7 @@ public:
     virtual void shutdown(void) {}
     virtual void gameStart(void) {}
 	virtual int getCurPos() { return 0; }
+	virtual int getUserScore(Lint pos) { return 0; }
 
 	virtual void			HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg){}
 	virtual void			HanderUserStartHu(User* pUser,LMsgC2SUserStartHuSelect* msg){}

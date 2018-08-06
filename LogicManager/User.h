@@ -30,6 +30,8 @@ public:
 	void    SendToUser(LMsg& msg, Lint userId);
 	void	Send(const LBuffPtr& buff);
 
+	void    SendGonghuiChange(Lint gonghuiId);
+
 	void	SendLoginInfo(Lint lastLoginTime);
 	void	SendItemInfo();
 	void	SendHorseInfo();

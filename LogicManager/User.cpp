@@ -114,6 +114,16 @@ void User::Login()
 	baseInfo->m_headImageUrl = m_userData.m_headImageUrl;
 	gUserManager.addUserBaseInfo(baseInfo);
 
+	std::vector<Lint> gonghuiIdVec = gUserManager.getGonghuiIdByAdminUser(m_userData.m_id);
+	for (Lint gonghuiId : gonghuiIdVec)
+	{
+		if (gonghuiId == 0)
+		{
+			continue;
+		}
+		SendGonghuiChange(gonghuiId);
+	}
+
 	// 远程日志
 	RLOG("login", getUserIPStr()
 		<< "|" << LTimeTool::GetLocalTimeInString()
@@ -159,17 +169,21 @@ void User::SendToUser(LMsg& msg, Lint userId)
 	if (safeUser && safeUser->isValid())
 	{
 		Lstring unionId = safeUser->getResource()->m_userData.m_unioid;
-
+		LLOG_DEBUG("valid user, unionId=%s.", unionId.c_str());
+		
 		if (unionId.empty())
 		{
 			return;
 		}
 
-		LMsgL2GUserMsg send;
-		send.m_strUUID = unionId;
-		send.m_dataBuff = msg.GetSendBuff();
-
-		gWork.SendMessageToGate(m_gateId, send);
+		// 发送的消息需要转换为其他
+		boost::shared_ptr<User> user = safeUser->getResource();
+		if (user->GetOnline())
+		{
+			LLOG_ERROR("Send msg %d to user %d.", msg.m_msgId, user->m_userData.m_id);
+			user->Send(msg);
+		}
+		
 	}
 }
 
@@ -180,6 +194,28 @@ void User::Send(const LBuffPtr& buff)
 	send.m_dataBuff = buff;
 
 	gWork.SendMessageToGate(m_gateId, send);
+}
+
+void User::SendGonghuiChange(Lint gonghuiId)
+{
+	Gonghui gonghui = gUserManager.getGonghuiInfoById(gonghuiId);
+	Lint id = gonghui.m_gonghuiId;
+	if (id == 0)
+	{
+		return;
+	}
+	Lint adminUserId = gonghui.m_adminUserId;
+
+	std::vector<GonghuiUser> userVec = gUserManager.getGonghuiApplyUser(id);
+	if (userVec.size() > 0)
+	{
+		LMsgS2CGonghuiStateChagne msg;
+		std::vector<Lint> item;
+		item.push_back(1);
+		msg.m_changeItems = item;
+		SendToUser(msg, adminUserId);
+		LLOG_DEBUG("Send user apply change to user:%d,gonghuiID=%d,applyUserSize=%d.", adminUserId, id, userVec.size());
+	}
 }
 
 void User::SendLoginInfo(Lint lastLoginTime)
@@ -535,6 +571,8 @@ void User::HanderUserGonghuiApply(LMsgC2SGonghuiApply* msg)
 
 	opRet.m_errorCode = 0;
 	Send(opRet);
+
+	SendGonghuiChange(gonghuiId);
 }
 
 void User::HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg)

@@ -240,6 +240,7 @@ bool LMsgFactory::Init()
 	RegestMsg(new LMsgC2SQueryApplyInfo());
 	RegestMsg(new LMsgC2SQueryDeskHistory());
 	RegestMsg(new LMsgS2CQueryDeskHistory());
+	RegestMsg(new LMsgS2CGonghuiStateChagne());
 
 	RegestMsg(new LMsgG2LLogin());
 	RegestMsg(new LMsgG2LUserMsg());

@@ -699,6 +699,7 @@ bool Desk::OnUserReconnect(User* pUser)
 	send1.m_pos = pos;
 	send1.m_ready = m_readyState[pos];
 	send1.m_score = m_vip ? m_vip->GetUserScore(pUser) : 0;
+	send1.m_score += mGameHandler->getUserScore(pos);
 	send1.m_coins = pUser->GetUserData().m_coins;
 	send1.m_state = m_state;
 	send1.m_maxCircle = m_vip ? m_vip->m_maxCircle : 0;
@@ -724,6 +725,7 @@ bool Desk::OnUserReconnect(User* pUser)
  			addmsg2.m_ip = m_user[i]->GetIp();
 			addmsg2.m_location = m_user[i]->m_location;
 			addmsg2.m_score = m_vip ? m_vip->GetUserScore(m_user[i]) : 0;
+			addmsg2.m_score += mGameHandler->getUserScore(i);
 			addmsg2.m_online = m_user[i]->GetOnline(); 
 			addmsg2.m_coins = m_user[i]->GetUserData().m_coins;
 			addmsg2.m_credits = m_user[i]->m_userData.m_creditValue;

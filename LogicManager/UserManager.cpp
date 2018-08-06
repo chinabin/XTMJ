@@ -549,6 +549,21 @@ Lint UserManager::delGonghui(Lint gonghuiId)
 	return -11;
 }
 
+std::vector<Lint> UserManager::getGonghuiIdByAdminUser(Lint adminUserId)
+{
+	std::vector<Lint> vec;
+	std::map<Lint, Gonghui>::iterator iter = m_gonghuiInfo.begin();
+	for (; iter != m_gonghuiInfo.end(); iter++)
+	{
+		Gonghui gonghui = iter->second;
+		if (adminUserId == gonghui.m_adminUserId)
+		{
+			vec.push_back(gonghui.m_gonghuiId);
+		}
+	}
+	return vec;
+}
+
 Lint UserManager::delGonghuiUser(Lint gonghuiId, Lint userId)
 {
 	std::vector<GonghuiUser> userVector;

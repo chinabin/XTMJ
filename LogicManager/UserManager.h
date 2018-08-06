@@ -43,7 +43,8 @@ public:
 	Lint delGonghuiUser(Lint gognhuiId, Lint userId);
 
 	Lint delGonghui(Lint gonghuiId);
-
+	// 根据用户Id获取用户名下的所有工会列表
+	std::vector<Lint> getGonghuiIdByAdminUser(Lint adminUserId);
 	void SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c);
 	Lint updateGonghuiRoomPolicy(Lint gonghuiId, Lstring roomPolicy, bool isAdd);
 	std::string& replace_all_distinct(std::string& str, const std::string& old_value, const std::string& new_value);
