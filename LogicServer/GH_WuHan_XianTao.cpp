@@ -1234,6 +1234,8 @@ void GH_WuHan_XianTao::OnGameOver(Lint result,Lint bombpos)
 	for (Lint i = 0; i < m_desk->GetPlayerCapacity(); i++)
 	{
 		gold[i] = m_totalScore[i];
+		// 牌局结束后，清空当前积分
+		m_totalScore[i] = 0;
 	}
 	LLOG_DEBUG("game over, score=%d,%d,%d,%d.", gold[0], gold[1], gold[2], gold[3]);
 	
