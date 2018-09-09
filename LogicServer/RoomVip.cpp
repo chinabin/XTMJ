@@ -737,15 +737,35 @@ Lint RoomVip::CreateGonghuiDesk(LMsgLMG2LCreateGonghuiDesk* pMsg, User* pUser)
 	{
 		desk->SetPlayerCapacity(3);
 	}
+	else if (pMsg->m_playType == 406)
+	{
+		desk->SetPlayerCapacity(2);
+	}
+	else if (pMsg->m_playType == 408)
+	{
+		desk->SetPlayerCapacity(4);
+	}
 
 	desk->m_baseScore = 1;
 	if (pMsg->m_baseScore == 401)
 	{
 		desk->m_baseScore = 2;
 	}
+	else if (pMsg->m_baseScore == 400)
+	{
+		desk->m_baseScore = 1;
+	}
 	else if (pMsg->m_baseScore == 402)
 	{
 		desk->m_baseScore = 4;
+	}
+	else if (pMsg->m_baseScore == 403)
+	{
+		desk->m_baseScore = 3;
+	}
+	else if (pMsg->m_baseScore == 404)
+	{
+		desk->m_baseScore = 5;
 	}
 
 	desk->setDeskGonghuiId(pMsg->m_gonghuiId);
@@ -801,9 +821,25 @@ Lint RoomVip::CreateVipDesk(LMsgLMG2LCreateDesk* pMsg, User* pUser)
 		{
 			baseScore = 4;
 		}
+		else if (408 == tmpPlayType[x])
+		{
+			playerCapacity = 4;
+		}
 		else if (407 == tmpPlayType[x])
 		{
 			playerCapacity = 3;
+		}
+		else if (406 == tmpPlayType[x])
+		{
+			playerCapacity = 2;
+		}
+		else if (403 == tmpPlayType[x])
+		{
+			baseScore = 3;
+		}
+		else if (404 == tmpPlayType[x])
+		{
+			baseScore = 5;
 		}
 	}
 
@@ -998,6 +1034,10 @@ Lint RoomVip::AddToVipDesk(User* pUser, Lint nDeskID)
 
 Lint RoomVip::convertPlayerNumberToType(Lint playerNumber)
 {
+	if (playerNumber == 2)
+	{
+		return 406;
+	}
 	return (playerNumber == 3) ? 407 : 408;
 }
 
@@ -1015,6 +1055,15 @@ Lint RoomVip::convertBaseScoreToType(Lint baseScore)
 	{
 		return 402;
 	}
+	else if (3 == baseScore)
+	{
+		return 403;
+	}
+	else if (5 == baseScore)
+	{
+		return 404;
+	}
+
 	return 400;
 }
 

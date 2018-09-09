@@ -507,6 +507,37 @@ void CardBase::DealCardThree(CardVector& v1, CardVector& v2, CardVector& v3, Car
 	SortCard(v3);
 }
 
+void CardBase::DealCardTwo(CardVector& v1, CardVector& v2, CardVector& v3, CardVector& v4, CardVector& v5, const Card* specialCard, bool needwind, bool needzhong, bool needflower)
+{
+	CardVector mCards;
+	mCards.insert(mCards.end(), m_cardNormal.begin(), m_cardNormal.end());
+
+	//更新随机因子
+	updateRandomFactor();
+
+	CardVector cardtmp;
+	Lint nSize = mCards.size();
+	while (nSize > 0)
+	{
+		Lint seed1 = L_Rand(0, nSize - 1);
+		cardtmp.push_back(mCards[seed1]);
+		mCards.erase(mCards.begin() + seed1, mCards.begin() + seed1 + 1);
+		nSize = mCards.size();
+	}
+
+	if (specialCard)
+		SwapCardBySpecial(cardtmp, specialCard, needwind, needzhong, needflower);
+
+	v1.insert(v1.begin(), cardtmp.begin(), cardtmp.begin() + 13);
+	v2.insert(v2.begin(), cardtmp.begin() + 13, cardtmp.begin() + 26);
+	v5.insert(v5.begin(), cardtmp.begin() + 26, cardtmp.end());
+
+	std::reverse(v5.begin(), v5.end());		//逆序桌上牌
+
+	SortCard(v1);
+	SortCard(v2);
+}
+
 // void CardBase::DealCard(CardVector& v1,CardVector& v2,CardVector& v3,CardVector& v4,CardVector& v5, bool needwind)
 // {
 // 	CardVector mCards;

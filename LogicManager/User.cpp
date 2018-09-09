@@ -593,7 +593,7 @@ void User::HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg)
 
 	Lint gonghuiId = msg->m_gonghuiId;
 	Lint playType = msg->m_playType; 
-	if (playType != 407 && playType != 408)
+	if (playType != 406 && playType != 407 && playType != 408)
 	{
 		LLOG_ERROR("Error, playType: %d is invalid.", playType);
 		opRet.m_errorCode = -3;
@@ -601,7 +601,7 @@ void User::HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg)
 		return;
 	}
 	Lint baseScoreType = msg->m_baseScoreType; 
-	if (baseScoreType != 400 && baseScoreType == 401 && baseScoreType == 402)
+	if (baseScoreType != 400 && baseScoreType != 401 && baseScoreType != 402 && baseScoreType != 403 && baseScoreType != 404)
 	{
 		LLOG_ERROR("Error, baseScoreType: %s is invalid.", baseScoreType);
 		opRet.m_errorCode = -3;

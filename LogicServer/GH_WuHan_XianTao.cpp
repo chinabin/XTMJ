@@ -66,7 +66,7 @@ void GH_WuHan_XianTao::shutdown(void)
 	m_curGetCard = NULL;
 	m_beforePos = INVAILD_POS;
 	m_beforeType = THINK_OPERATOR_NULL;
-	m_zhuangpos = L_Rand(0, 2);//0;	// 庄开始为0			// 改为随机庄
+	m_zhuangpos = L_Rand(0, 1);//0;	// 庄开始为0			// 改为随机庄
 	m_curPos = INVAILD_POS;
 	m_endStartPos = 0;
 	m_endStartCurPos = 0;
@@ -663,6 +663,19 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 			std::vector<CardValue> cards(4, unit->m_card[0]->ToCardValue());
 			m_video.AddOper(VIDEO_OPER_AN_GANG, pos, cards);
 
+			// 杠需要删除peng中的多余信息
+			auto iter = m_pengCard[pos].begin();
+			for (; iter != m_pengCard[pos].end(); )
+			{
+				if (*iter == unit->m_card[0])
+				{
+					iter = m_pengCard[pos].erase(iter);
+				}
+				else
+				{
+					++iter;
+				}
+			}
 			m_abombCard[pos].insert(m_abombCard[pos].end(), 4, unit->m_card[0]);
 
 			m_beforeType = THINK_OPERATOR_AGANG;
@@ -690,6 +703,25 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 			gCB_WuHan_XianTao->EraseCard(m_handCard[pos], unit->m_card[0],3);	
 			m_desk->BoadCast(sendMsg);
 			m_minggang[pos] += 1;
+
+			//录像
+			std::vector<CardValue> cards(4, unit->m_card[0]->ToCardValue());
+			m_video.AddOper(VIDEO_OPER_MING_GANG, pos, cards);
+
+			m_gangCard[pos].insert(m_gangCard[pos].end(), 4, unit->m_card[0]);
+			// 杠需要删除peng中的多余信息
+			auto iter = m_pengCard[pos].begin();
+			for (; iter != m_pengCard[pos].end(); )
+			{
+				if (*iter == unit->m_card[0])
+				{
+					iter = m_pengCard[pos].erase(iter);
+				}
+				else
+				{
+					++iter;
+				}
+			}
 
 			//这里玩家思考
 			//m_beforePos = m_curPos;
@@ -723,8 +755,25 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 			gCB_WuHan_XianTao->EraseCard(m_handCard[pos], unit->m_card[0],1);
 			m_desk->BoadCast(sendMsg);	
 			m_minggang[pos] += 1;
+			
+			//录像
+			std::vector<CardValue> cards(4, unit->m_card[0]->ToCardValue());
+			m_video.AddOper(VIDEO_OPER_MING_GANG, pos, cards);
+			m_gangCard[pos].insert(m_gangCard[pos].end(), 4, unit->m_card[0]);
+			// 杠需要删除peng中的多余信息
+			auto iter = m_pengCard[pos].begin();
+			for (; iter != m_pengCard[pos].end(); )
+			{
+				if (*iter == unit->m_card[0])
+				{
+					iter = m_pengCard[pos].erase(iter);
+				}
+				else
+				{
+					++iter;
+				}
+			}
 
-			//这里玩家思考
 			m_beforeType = THINK_OPERATOR_MBU;
 			SetPlayIng(pos, true, true, true, true);
 			
@@ -1449,9 +1498,13 @@ void GH_WuHan_XianTao::DeakCard()
 	{
 		gCB_WuHan_XianTao->DealCard(m_handCard[0], m_handCard[1], m_handCard[2], m_handCard[3], m_deskCard, special, m_pt_feng);
 	}
-	else
+	else if (3 == m_desk->GetPlayerCapacity())
 	{
 		gCB_WuHan_XianTao->DealCardThree(m_handCard[0], m_handCard[1], m_handCard[2], m_handCard[3], m_deskCard, special, m_pt_feng);
+	}
+	else if (2 == m_desk->GetPlayerCapacity())
+	{
+		gCB_WuHan_XianTao->DealCardTwo(m_handCard[0], m_handCard[1], m_handCard[2], m_handCard[3], m_deskCard, special, m_pt_feng);
 	}
 
 	std::stringstream str;
@@ -1478,14 +1531,8 @@ void GH_WuHan_XianTao::DeakCard()
 	//m_handCard[m_curPos].push_back(newCard);
 	//m_deskCard.pop_back();
 	gCB_WuHan_XianTao->SortCard(m_handCard[m_curPos]);
-	if (m_desk->GetPlayerCapacity() != DESK_USER_COUNT)
-	{
-		m_cardPos1 = L_Rand(0, 2);
-	}
-	else
-	{
-		m_cardPos1 = L_Rand(0, 3);
-	}
+	
+	m_cardPos1 = L_Rand(0, m_desk->GetPlayerCapacity() - 1);
 	m_cardPos2 = L_Rand(1, 6);
 	m_cardPos3 = L_Rand(1, 6);
 
@@ -2206,6 +2253,20 @@ void GH_WuHan_XianTao::ThinkEnd()
 		}
 		m_video.AddOper(VIDEO_OPER_GANG, gangPos, cards);
 
+		// 杠需要删除peng中的多余信息
+		auto iter = m_pengCard[gangPos].begin();
+		for (; iter != m_pengCard[gangPos].end(); )
+		{
+			if (*iter == m_curOutCard)
+			{
+				iter = m_pengCard[gangPos].erase(iter);
+			}
+			else
+			{
+				++iter;
+			}
+		}
+
 		m_diangang[gangPos] += 1;
 		m_adiangang[m_beforePos] += 1;
 		m_mingGangInfo[gangPos].push_back(m_beforePos);
@@ -2282,6 +2343,20 @@ void GH_WuHan_XianTao::ThinkEnd()
 
 		m_video.AddOper(VIDEO_OPER_GANG, anGangPos, cards);
 
+		// 杠需要删除peng中的多余信息
+		auto iter = m_pengCard[anGangPos].begin();
+		for (; iter != m_pengCard[anGangPos].end(); )
+		{
+			if (*iter == m_curOutCard)
+			{
+				iter = m_pengCard[anGangPos].erase(iter);
+			}
+			else
+			{
+				++iter;
+			}
+		}
+
 		m_diangang[anGangPos] += 1;
 		m_adiangang[m_beforePos] += 1;
 		m_mingGangInfo[anGangPos].push_back(m_beforePos);
@@ -2353,6 +2428,26 @@ void GH_WuHan_XianTao::ThinkEnd()
 			cards.push_back(card);
 			m_gangCard[buPos].push_back(m_curOutCard);
 		}
+
+		for (auto iter = m_pengCard[buPos].begin(); iter != m_pengCard[buPos].end(); iter++)
+		{
+			LLOG_DEBUG("");
+		}
+
+		// 补杠需要删除peng中的多余信息
+		auto iter = m_pengCard[buPos].begin();
+		for (; iter != m_pengCard[buPos].end(); )
+		{
+			if (*iter == m_curOutCard)
+			{
+				iter = m_pengCard[buPos].erase(iter);
+			}
+			else
+			{
+				++iter;
+			}
+		}
+
 		m_video.AddOper(VIDEO_OPER_OTHER_BU, buPos, cards);
 
 		m_diangang[buPos] += 1;
