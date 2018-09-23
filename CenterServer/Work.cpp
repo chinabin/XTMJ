@@ -409,7 +409,7 @@ void Work::HanderLogicLogin(LMsgL2CeLogin* msg)
 	if(msg->m_needLoadUserInfo == 1)
 	{
 		gUserManager.LoadUserIdInfo(msg->m_ID);
-		gUserManager.loadGonghuiInfo(msg->m_ID);
+		//gUserManager.loadGonghuiInfo(msg->m_ID);
 	}
 }
 
@@ -753,13 +753,13 @@ void Work::HanderHttp(LMsgHttp* msg)
 			// 				return;
 			// 			}
 			if (paraMaps["msg"] == "charge")
-				HanderGMCharge(paraMaps,msg->m_sp);
-			else if(paraMaps["msg"] == "agent")		// 设置代理
-				HanderGMSetAgentPower(paraMaps,msg->m_sp);
-			else if(paraMaps["msg"] == "exchange")    //换房卡了
+				HanderGMCharge(paraMaps, msg->m_sp);
+			else if (paraMaps["msg"] == "agent")		// 设置代理
+				HanderGMSetAgentPower(paraMaps, msg->m_sp);
+			else if (paraMaps["msg"] == "exchange")    //换房卡了
 				HanderSetExchange(paraMaps, msg->m_sp);
 			else if (paraMaps["msg"] == "coins")
-				HanderGMCoins(paraMaps,msg->m_sp);
+				HanderGMCoins(paraMaps, msg->m_sp);
 			else if (paraMaps["msg"] == "horse")
 				HanderGMHorse(paraMaps, msg->m_sp);
 			else if (paraMaps["msg"] == "buy")
@@ -774,12 +774,14 @@ void Work::HanderHttp(LMsgHttp* msg)
 				HanderSetPXActive(paraMaps, msg->m_sp);
 			else if (paraMaps["msg"] == "OldUGiveCardActive")
 				HanderSetOUGCActive(paraMaps, msg->m_sp);	// 老玩家送房卡活动
-			else if(paraMaps["msg"] == "ActivityDraw")
-				HanderActivityDrawSet(paraMaps,msg->m_sp);
-			else if(paraMaps["msg"] == "ActivityShare")
-				HanderActivityShareSet(paraMaps,msg->m_sp);
-			else if(paraMaps["msg"] == "freeze")
-				HanderFreezeUser(paraMaps,msg->m_sp);
+			else if (paraMaps["msg"] == "ActivityDraw")
+				HanderActivityDrawSet(paraMaps, msg->m_sp);
+			else if (paraMaps["msg"] == "ActivityShare")
+				HanderActivityShareSet(paraMaps, msg->m_sp);
+			else if (paraMaps["msg"] == "freeze")
+				HanderFreezeUser(paraMaps, msg->m_sp);
+			else if (paraMaps["msg"] == "gonghui")
+				HanderGHMsgs(paraMaps, msg->m_sp);
 			else
 				SendRet("{\"errorCode\":2,\"errorMsg\":\"msg type error\"}", msg->m_sp);//消息类型错误
 		}
@@ -788,6 +790,39 @@ void Work::HanderHttp(LMsgHttp* msg)
 			SendRet("{\"errorCode\":1,\"errorMsg\":\"get url error\"}", msg->m_sp);//请求链接错误
 		}
 	}
+}
+
+void Work::HanderGHMsgs(std::map<Lstring, Lstring>& param, LSocketPtr sp)
+{
+	LLOG_ERROR("Work::HanderGHMsgs %s:%s", param["openId"].c_str(), param["admin"].c_str());
+
+	boost::shared_ptr<CSafeUser> safeUser = gUserManager.getUser(atoi(param["openId"].c_str()));			// 此处openId改为使用玩家的userId 也就是user表的Id字段
+	if (safeUser.get() == NULL || !safeUser->isValid())
+	{
+		SendRet("{\"errorCode\":7,\"errorMsg\":\"user not exiest\"}", sp);//玩家不存在
+		return;
+	}
+
+	boost::shared_ptr<DUser> user = safeUser->getUser();
+
+	Lint	errorCode = 0;
+	Lint	cardType = atoi(param["cardType"].c_str());
+	Lint	cardNum = atoi(param["cardNum"].c_str());
+	Lint	operType = atoi(param["operType"].c_str());
+
+	LMsgCe2LGonghuiInfo msg;
+	msg.m_count = 1;
+	msg.m_hasSentAll = 1;
+
+	std::vector<Gonghui> gonghuiVec;
+	Gonghui gonghui;
+	gonghui.m_adminUserId = atoi(param["openId"].c_str());
+	gonghuiVec.push_back(gonghui);
+
+	msg.m_gonghui = gonghuiVec;
+
+	SendMsgToAllLogic(msg);
+	SendRet("{\"errorCode\":0,\"errorMsg\":\"success\"}", sp);//成功
 }
 
 bool Work::HanderCheckMd5(std::map<Lstring, Lstring>& param)

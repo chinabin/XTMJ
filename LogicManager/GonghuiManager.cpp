@@ -831,3 +831,100 @@ bool GonghuiManager::getDeskHistoryInfo(Lint deskId, Lstring& data)
 
 	return true;
 }
+
+Lint GonghuiManager::getMaxGonghuiId()
+{
+	LDBSession dbSession2;
+	if (!dbSession2.Init(gConfig.GetDbHost(), gConfig.GetDbUser(), gConfig.GetDbPass(), "mj_center", "utf8mb4", gConfig.GetDbPort()))
+	{
+		LLOG_ERROR("Fail to init db session.");
+		return -1;
+	}
+
+	std::stringstream sql2;
+	sql2 << "SELECT max(id) FROM gonghui";
+	LLOG_ERROR("sqlstr=%s.", sql2.str().c_str());
+
+	if (mysql_real_query(dbSession2.GetMysql(), sql2.str().c_str(), sql2.str().size()))
+	{
+		LLOG_ERROR("GonghuiManager::getMaxGonghuiId sql error %s", mysql_error(dbSession2.GetMysql()));
+		return -1;
+	}
+
+	MYSQL_RES* res2 = mysql_store_result(dbSession2.GetMysql());
+	if (res2 == NULL)
+	{
+		LLOG_ERROR("Fail to getMaxGonghuiId result. Error = %s", mysql_error(dbSession2.GetMysql()));
+		return -1;
+	}
+
+	MYSQL_ROW row2 = mysql_fetch_row(res2);
+	if (!row2)
+	{
+		mysql_free_result(res2);
+		return false;
+	}
+
+	Lint maxGonghuiId = atoi(*row2++);
+
+	mysql_free_result(res2);
+
+	return maxGonghuiId;
+}
+
+Lint GonghuiManager::addGonghui(Lint adminId, Lstring gonghuiName)
+{
+	LDBSession dbSession2;
+	if (!dbSession2.Init(gConfig.GetDbHost(), gConfig.GetDbUser(), gConfig.GetDbPass(), "mj_center", "utf8mb4", gConfig.GetDbPort()))
+	{
+		LLOG_ERROR("Fail to init db session.");
+		return 500;
+	}
+
+	Lint gonghuiId = getMaxGonghuiId();
+	if (gonghuiId == -1)
+	{
+		return 500;
+	}
+
+	gonghuiId = gonghuiId + 1;
+
+	bool m_bLoadGonhuiSuccess = true;
+	std::stringstream sql2;
+	sql2 << "insert into gonghui(id, name, detail, adminId, roomPolicy, status)";
+	sql2 << "values(" << gonghuiId << ", '" << gonghuiName << "', '" << gonghuiName << "', " << adminId << ", '', '')";
+	LLOG_ERROR("createGonghui sqlStr=%s", sql2.str().c_str());
+
+	if (mysql_real_query(dbSession2.GetMysql(), sql2.str().c_str(), sql2.str().size()))
+	{
+		LLOG_ERROR("GonghuiManager::createGonghui sql2 error %s", mysql_error(dbSession2.GetMysql()));
+		return 501;
+	}
+
+	std::stringstream sql3;
+	sql3 << "insert into r_gonghui_user(gonghuiId, userId) values(" << gonghuiId << ", " << adminId << ")";
+	if (mysql_real_query(dbSession2.GetMysql(), sql3.str().c_str(), sql3.str().size()))
+	{
+		LLOG_ERROR("GonghuiManager::createGonghui sql3 error %s", mysql_error(dbSession2.GetMysql()));
+		return 502;
+	}
+
+	Gonghui gonghui;
+	gonghui.m_gonghuiId = gonghuiId;
+	gonghui.m_gonghuiName = gonghuiName;
+	gonghui.m_adminUserId = adminId;
+	gonghui.m_roomPolicy = "";
+	LLOG_ERROR("gonghui info: id=%d, name=%s, adminUserId=%d, roomPolciy=%s.", gonghui.m_gonghuiId, gonghui.m_gonghuiName.c_str(), gonghui.m_adminUserId, gonghui.m_roomPolicy.c_str());
+	std::vector<PaiJuInfo> paijuInfo = _getPaiJuByGonghuiId(gonghui.m_gonghuiId);
+	gonghui.m_paijuInfo = paijuInfo;
+	gonghui.m_paijuCount = paijuInfo.size();
+
+	std::vector<GonghuiUser> userInfo = _getUserInfoByGonghuiId(gonghui.m_gonghuiId);
+	m_gonghuiUser[gonghui.m_gonghuiId] = userInfo;
+
+	gonghui.m_userCount = userInfo.size();
+	gonghui.m_userInfo = userInfo;
+	m_gonghuiInfo[gonghui.m_gonghuiId] = gonghui;
+
+	return gonghuiId;
+}

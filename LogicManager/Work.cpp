@@ -717,7 +717,7 @@ void Work::PrintGonghuiInfo(std::vector<Gonghui> gonghuiInfo)
 			SplitString(policy, policyVec, ",");
 			if (policyVec.size() != 4)
 			{
-				LLOG_ERROR("Error, roomPolicy: %s is invalid.", roomPolicy.c_str());
+				LLOG_ERROR("Error, roomPolicy: %s is invalid.", policy.c_str());
 				continue;
 			}
 
@@ -753,6 +753,26 @@ void Work::HanderCenterGonghuiInfo(LMsgCe2LGonghuiInfo* msg)
 	{
 		LLOG_ERROR("Error, gonghui info msg is null.");
 		return;
+	}
+
+	// TODO 此消息之前未使用，当前用作后台重新加载工会使用
+
+	std::vector<Gonghui> gonghuiInfo = msg->m_gonghui;
+	for (Gonghui gonghui : gonghuiInfo)
+	{
+		Lint adminId = gonghui.m_adminUserId;
+		Lstring gonghuiName = gUserManager.getUserNameById(adminId);
+		Lint gonghuiId = gGonghuiManager.addGonghui(adminId, gonghuiName);
+		if (gonghuiId < 10000)
+		{
+			LLOG_ERROR("Error, create gonghui return %d.", gonghuiId);
+			break;
+		}
+
+		Gonghui tmpGonghui = gGonghuiManager.getGonghuiInfoById(gonghuiId);
+		std::vector<Gonghui> tmpVec;
+		tmpVec.push_back(tmpGonghui);
+		gUserManager.setGonghuiInfo(tmpVec);
 	}
 
 	//std::vector<Gonghui> gonghuiInfo = msg->m_gonghui;

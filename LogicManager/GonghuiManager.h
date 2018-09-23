@@ -63,6 +63,10 @@ public:
 
 	bool deleteGonghui(Lint gonghuiId);
 
+	Lint addGonghui(Lint adminid, Lstring gonghuiName);
+
+	Lint getMaxGonghuiId();
+
 	bool getDeskHistoryInfo(Lint deskId, Lstring& data);
 private:
 	std::map<Lint, Gonghui> m_gonghuiInfo; // 工会基本信息

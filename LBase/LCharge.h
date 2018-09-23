@@ -67,7 +67,9 @@ enum CARDS_OPER_TYPE
 	CARDS_OPER_TYPE_RANK = 8,		//排行榜奖励
 	CARDS_OPER_TYPE_BIND_AGENT = 9,	//绑定代理赠送
 	CARDS_OPER_TYPE_SHARE = 10,		// 分享送房卡
-	CARDS_OPER_TYPE_TASK = 11,			// 任务奖励房卡
+	CARDS_OPER_TYPE_TASK = 11,		// 任务奖励房卡
+	CARDS_OPER_TYPE_FREE_CHARGE = 12, // 后台免费充值
+	CARDS_OPER_TYPE_USER_TRANS = 13,  // 用户间免费赠送
 };
 
 enum COINS_OPER_TYPE

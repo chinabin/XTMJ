@@ -394,7 +394,7 @@ void UserManager::addGonghuiApply(Lint gonghuiId, Lint userId)
 
 std::vector<Gonghui> UserManager::getUserGonghuiByUserId(Lint userId)
 {
-	LLOG_ERROR("begin to get user gonghui info, userId=%d, gonghui size=%d.", userId, m_gonghuiInfo.size());
+	//LLOG_ERROR("begin to get user gonghui info, userId=%d, gonghui size=%d.", userId, m_gonghuiInfo.size());
 	std::vector<Gonghui> gonghuiInfo;
 	std::map<Lint, Gonghui>::iterator iter;
 	for (iter = m_gonghuiInfo.begin(); iter != m_gonghuiInfo.end(); iter++)
@@ -402,11 +402,11 @@ std::vector<Gonghui> UserManager::getUserGonghuiByUserId(Lint userId)
 		Gonghui gonghui = iter->second;
 		std::vector<GonghuiUser> userList = gonghui.m_userInfo;
 
-		LLOG_ERROR("gonghui info, gonghuiId=%d, gonghuiName=%s, adminUserId=%d.", gonghui.m_gonghuiId, gonghui.m_gonghuiName.c_str(), gonghui.m_adminUserId);
+		//LLOG_ERROR("gonghui info, gonghuiId=%d, gonghuiName=%s, adminUserId=%d.", gonghui.m_gonghuiId, gonghui.m_gonghuiName.c_str(), gonghui.m_adminUserId);
 
 		for (GonghuiUser tmpUser : userList)
 		{
-			LLOG_DEBUG("user id=%d, name=%s.", tmpUser.id, tmpUser.name.c_str());
+			//LLOG_DEBUG("user id=%d, name=%s.", tmpUser.id, tmpUser.name.c_str());
 			if (tmpUser.id == userId)
 			{
 				LLOG_ERROR("find gonghui info, userId=%d, gonghuiId=%d, gonghuiName=%s, adnmin=%d.", userId, gonghui.m_gonghuiId, gonghui.m_gonghuiName.c_str(), gonghui.m_adminUserId);
@@ -649,15 +649,42 @@ Lint UserManager::updateGonghuiRoomPolicy(Lint gonghuiId, Lstring roomPolicy, bo
 	
 	if (isAdd)
 	{
+		if (curPolicy.find(roomPolicy.substr(0, roomPolicy.length() -1)) != std::string::npos)
+		{
+			LLOG_ERROR("Error, roomPolicy:%s had already exist.", roomPolicy.c_str());
+			return -12;
+		}
 		newPolicy = (curPolicy[curPolicy.length() - 1] == ';') ? (curPolicy + roomPolicy) : (curPolicy + ";" + roomPolicy);
+		LLOG_DEBUG("curPolicy=%s,newPolicy=%s.", curPolicy.c_str(), newPolicy.c_str());
 	}
 	else
 	{
 		newPolicy = replace_all_distinct(curPolicy, roomPolicy, "");
+		newPolicy = replace_all_distinct(curPolicy, ";;", ";");
+		std::vector<PaiJuInfo> newPaijuVec;
+		std::vector<PaiJuInfo> tmpPaijuVec = iter->second.m_paijuInfo;
+		for (PaiJuInfo paiju : tmpPaijuVec)
+		{
+			std::stringstream ss1,ss2;
+			ss1 << paiju.m_roomType << "," << paiju.m_roomScore << "," << paiju.m_roomCounts << ",1";
+			ss2 << paiju.m_roomType << "," << paiju.m_roomScore << "," << paiju.m_roomCounts << ",2";
+			
+			Lstring roomPolicy1 = ss1.str();
+			Lstring roomPolicy2 = ss2.str();
+			LLOG_DEBUG("roomPolicy=%s,roomPolicy1=%s,roomPolicy2=%s.", roomPolicy.c_str(), roomPolicy1.c_str(), roomPolicy2.c_str());
+			if (roomPolicy1 != roomPolicy && roomPolicy2 != roomPolicy)
+			{
+				newPaijuVec.push_back(paiju);
+			}
+		}
+		iter->second.m_paijuInfo = newPaijuVec;
+		iter->second.m_paijuCount = newPaijuVec.size();
 	}
+
 	iter->second.m_roomPolicy = newPolicy;
 
 	// TODO 检测policy的合法性，并且调用创建工会房间的接口，创建房间
 	// TODO 待补充数据库入库信息
 	gGonghuiManager.updateGonghuiPolicy(gonghuiId, newPolicy);
+	return 0;
 }

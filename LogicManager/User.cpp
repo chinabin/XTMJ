@@ -634,7 +634,13 @@ void User::HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg)
 	
 	if (msg->m_opType == "add")
 	{
-		gUserManager.updateGonghuiRoomPolicy(msg->m_gonghuiId, roomPolicy, true);
+		Lint ret = gUserManager.updateGonghuiRoomPolicy(msg->m_gonghuiId, roomPolicy, true);
+		if (ret == -1 || ret == -12)
+		{
+			opRet.m_errorCode = ret;
+			Send(opRet);
+			return;
+		}
 
 		Lint count;
 		NeedCardCount(roomType, count);
@@ -658,30 +664,6 @@ void User::HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg)
 			}
 		}
 
-		// 发送消息给工会所有的玩家
-		LMsgS2CGonghuiDeskChange cMsg;
-		cMsg.m_gonghuiId = msg->m_gonghuiId;
-		cMsg.m_gonghui = gUserManager.getGonghuiInfoById(msg->m_gonghuiId);
-
-		std::vector<GonghuiUser> gonghuiUsers = gUserManager.getGonghuiUserInfoById(msg->m_gonghuiId);
-
-		for (GonghuiUser tmpUser : gonghuiUsers)
-		{
-			// 这里发送消息到所有工会的已登录的用户客户端上，同时更新工会缓存信息
-			boost::shared_ptr<CSafeResourceLock<User> > safeUser = gUserManager.getUserbyUserId(tmpUser.id);
-			if (safeUser.get() == NULL || !safeUser->isValid())
-			{
-				continue;
-			}
-
-			// 发送的消息需要转换为其他
-			boost::shared_ptr<User> user = safeUser->getResource();
-			if (user->GetOnline())
-			{
-				LLOG_ERROR("Send gonghui room change to user %d.", user->m_userData.m_id);
-				user->Send(cMsg);
-			}
-		}
 	}
 	else
 	{
@@ -690,6 +672,31 @@ void User::HanderUserCreateGonghuiRoom(LMsgC2SGonghuiRoomOP* msg)
 
 	opRet.m_errorCode = 0;
 	Send(opRet);
+
+	// 发送消息给工会所有的玩家
+	LMsgS2CGonghuiDeskChange cMsg;
+	cMsg.m_gonghuiId = msg->m_gonghuiId;
+	cMsg.m_gonghui = gUserManager.getGonghuiInfoById(msg->m_gonghuiId);
+
+	std::vector<GonghuiUser> gonghuiUsers = gUserManager.getGonghuiUserInfoById(msg->m_gonghuiId);
+
+	for (GonghuiUser tmpUser : gonghuiUsers)
+	{
+		// 这里发送消息到所有工会的已登录的用户客户端上，同时更新工会缓存信息
+		boost::shared_ptr<CSafeResourceLock<User> > safeUser = gUserManager.getUserbyUserId(tmpUser.id);
+		if (safeUser.get() == NULL || !safeUser->isValid())
+		{
+			continue;
+		}
+
+		// 发送的消息需要转换为其他
+		boost::shared_ptr<User> user = safeUser->getResource();
+		if (user->GetOnline())
+		{
+			LLOG_ERROR("Send gonghui room change to user %d.", user->m_userData.m_id);
+			user->Send(cMsg);
+		}
+	}
 }
 
 void User::HanderGetDeskMatchInfo(LMsgC2SQueryDeskHistory* msg)

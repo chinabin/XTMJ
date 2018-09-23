@@ -59,6 +59,7 @@ protected:
 	void        HanderActivityShareSet(std::map<Lstring,Lstring>& param,LSocketPtr sp);
 
 	void		HanderFreezeUser(std::map<Lstring,Lstring>& param,LSocketPtr sp);
+	void		HanderGHMsgs(std::map<Lstring, Lstring>& param, LSocketPtr sp);
 	
 public:
 	bool		isLogicManagerExist(Lint logicManagerID);

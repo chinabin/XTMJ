@@ -5936,8 +5936,8 @@ struct PaiJuInfo
 {
 	Lint m_roomId;    // 房间ID
 	Lint m_roomCounts;  // 局数,1-3分别表示4-8-10局
-	Lint m_roomType;  // 407表示3人麻将，为408表示4人麻将
-	Lint m_roomScore;  // 牌局底分，400、401、402分别表示1、2、4分
+	Lint m_roomType;  // 407表示3人麻将，为408表示4人麻将，为406表示2人麻将
+	Lint m_roomScore;  // 牌局底分，400、401、402、403、404分别表示1、2、4、3、5分
 	Lstring m_roomState;  // 房间状态
 	Lstring m_user1;
 	Lstring m_user2;
@@ -6288,6 +6288,7 @@ struct LMsgS2CGonghuiOPResult : public LMsgSC
 	// -9 删除工会用户时，不能删除会长
 	// -10 非工会会长不能解散工会
 	// -11 解散工会失败
+	// -12 此策略已经存在
 	Lint    m_errorCode; // 操作结果： 0成功，其他失败
 
 	LMsgS2CGonghuiOPResult() : LMsgSC(MSG_S_2_C_GONGHUI_OPRESULT)
