@@ -50,6 +50,7 @@ BASE_LIBS = ./libs/LActive.o \
   	    ./libs/BaseCommonFunc.o \
 	    ./libs/IPFilter.o \
 	    ./libs/LMemeoryRecycle.o \
+		../LBase/LDBSession.o \
 		./libs/RLogHttp.o \
 
 
