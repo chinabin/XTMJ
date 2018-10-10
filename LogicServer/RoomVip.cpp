@@ -430,6 +430,14 @@ void VipLogItem::SendEnd()
 	memset(msg.m_agang,0,sizeof(msg.m_agang));
 	memset(msg.m_mgang,0,sizeof(msg.m_mgang));
 
+	for (Lint x = 0; x < DESK_USER_COUNT; x++)
+	{
+		msg.m_win[x] = m_desk->m_hupaiCount[x];
+		msg.m_dzimo[x] = m_desk->m_zhuangCount[x];
+		msg.m_dbomb[x] = m_desk->m_laiziCount[x];
+		msg.m_dwin[x] = m_desk->m_timeoutCount[x];
+	}
+
 	for (Lsize i = 0; i < m_log.size(); ++i)
 	{
 		for(Lint  j = 0; j < 4; ++j)

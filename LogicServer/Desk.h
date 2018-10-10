@@ -245,6 +245,27 @@ public:
 	{
 		return m_cardType;
 	}
+
+	inline void updateZhuangCount(Lint pos)
+	{
+		m_zhuangCount[pos]++;
+	}
+
+	inline void updateLaiziCount(Lint pos)
+	{
+		m_laiziCount[pos]++;
+	}
+
+	inline void updateTimeoutCount(Lint pos)
+	{
+		m_timeoutCount[pos]++;
+	}
+
+	inline void updateHupaiCount(Lint pos)
+	{
+		m_hupaiCount[pos]++;
+	}
+
 protected:
 	void			_clearData();
 	bool			_createRegister(GameType gameType);
@@ -271,6 +292,13 @@ public:
 	bool			m_autoPlay[DESK_USER_COUNT];	//是否检查自动出牌
 	Lint			m_autoPlayTime[DESK_USER_COUNT];//自动出牌的倒计时
 	Lint			m_autoOutTime[DESK_USER_COUNT]; //倒计时的超时时间
+
+	// 统计信息，总局数，总超时次数，飘癞子总数
+	Lint            m_zhuangCount[DESK_USER_COUNT]; // 坐庄次数
+	Lint            m_timeoutCount[DESK_USER_COUNT]; // 超时次数
+	Lint            m_laiziCount[DESK_USER_COUNT];   // 飘癞子次数
+	Lint            m_hupaiCount[DESK_USER_COUNT];   // 胡牌次数
+	bool            m_bRecoredTimeOut;    // 是否记录超时
 
 	// 配置
 	Lint			m_autoChangeOutTime;			//自动换牌的时间

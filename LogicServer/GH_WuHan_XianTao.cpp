@@ -149,6 +149,8 @@ void GH_WuHan_XianTao::SetDeskPlay()
 	m_beforePos = INVAILD_POS;
 	m_beforeType = THINK_OPERATOR_NULL;
 	m_curPos = m_zhuangpos;
+	m_desk->updateZhuangCount(m_zhuangpos);
+
 	m_endStartPos = 0;
 	m_endStartCurPos = 0;
 	m_needGetCard = false;
@@ -478,6 +480,8 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 
 						// 飘癞子倍数翻倍
 						m_baseScore[m_curPos] = m_baseScore[m_curPos] * 2;
+
+						m_desk->updateLaiziCount(m_curPos);
 					}
 
 					m_desk->BoadCast(sendMsg);
@@ -542,6 +546,7 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 		{
 			//录相;
 			VideoDoing(unit->m_type,pos,0,0);
+			m_desk->updateHupaiCount(pos);
 
 			bool hasLaizi = false;
 			if (m_curGetCard)
@@ -628,7 +633,7 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 				m_playerHuInfo[m_curPos].wincards.push_back(curGetCard);
 			}
 			m_video.AddOper( VIDEO_OPER_ZIMO, m_curPos, m_playerHuInfo[m_curPos].wincards );
-
+			m_zhuangpos = m_curPos;
 			OnGameOver(WIN_ZIMO, INVAILD_POS);
 		}
 		else if(unit->m_type == THINK_OPERATOR_AGANG)
@@ -732,7 +737,7 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 		else if(unit->m_type == THINK_OPERATOR_MBU)
 		{
 			int score = 0;
-			for (int i = 0; i < DESK_USER_COUNT; ++i)
+			for (int i = 0; i < m_desk->GetPlayerCapacity(); ++i)
 			{
 				if (i == m_curPos)
 				{
@@ -1790,7 +1795,7 @@ void GH_WuHan_XianTao::calcUserScore(Lint result, Lint gold[], Lint& bombCount, 
 
 bool GH_WuHan_XianTao::checkOtherPlayCanHu(int pos)
 {
-	LLOG_ERROR("m_playGhostCard=%d, ghostCard=%d,%d.", m_playGhostCard, m_ghostCardReal[0].m_color, m_ghostCardReal[0].m_number);
+	//LLOG_ERROR("m_playGhostCard=%d, ghostCard=%d,%d.", m_playGhostCard, m_ghostCardReal[0].m_color, m_ghostCardReal[0].m_number);
 	if (m_playGhostCard)
 	{
 		return false;
@@ -2020,6 +2025,7 @@ void GH_WuHan_XianTao::ThinkEnd()
 		if (m_beforeType == THINK_OPERATOR_AGANG || m_beforeType == THINK_OPERATOR_MGANG || m_beforeType == THINK_OPERATOR_MBU)
 		{
 			// 这里可以先把所有胡牌的人筛选出来，然后统一计算分数，发送消息给前台
+			Lint hupaiNumber = 0;
 
 			std::vector<Lint> huVec;
 			//录像
@@ -2027,6 +2033,11 @@ void GH_WuHan_XianTao::ThinkEnd()
 			{
 				if (m_thinkRet[i].m_type == THINK_OPERATOR_BOMB)
 				{
+					// 先设置胡牌的下一把为庄，如果是一炮多响，下面再调整为放炮者
+					m_zhuangpos = i;
+					hupaiNumber++;
+
+					m_desk->updateHupaiCount(i);
 					huVec.push_back(i);
 					for(Lsize n=0;n<m_thinkRet[i].m_card.size();++n)
 					{
@@ -2072,13 +2083,18 @@ void GH_WuHan_XianTao::ThinkEnd()
 				}
 			}
 
+			if (hupaiNumber > 1)
+			{
+				m_zhuangpos = m_curPos;
+			}
+
 			LLOG_DEBUG("beforeScore=%d,%d,%d,%d.", m_beforeOpScore[0], m_beforeOpScore[1], m_beforeOpScore[2], m_beforeOpScore[3]);
 
 			int huScore[4] = { 0 };
 			// 遍历所有人，如果此人胡牌，则按照正常扣分
 			// 如果此人不胡牌，则直接返还积分
 			// 如果此人是上一个出牌人，则扣除双倍分数
-			for (int m = 0; m < DESK_USER_COUNT; m++)
+			for (int m = 0; m < m_desk->GetPlayerCapacity(); m++)
 			{
 				bool hasFound = false;
 				for (int n = 0; n < huVec.size(); n++)
@@ -2150,10 +2166,14 @@ void GH_WuHan_XianTao::ThinkEnd()
 		}
 		else
 		{
+			Lint hupaiNumber2 = 0;
 			for (int i = 0; i < m_desk->GetPlayerCapacity(); ++i)
 			{
 				if (m_thinkRet[i].m_type == THINK_OPERATOR_BOMB)
 				{
+					m_zhuangpos = i;
+					hupaiNumber2++;
+					m_desk->updateHupaiCount(i);
 					std::vector<CardValue> cards;
 					CardValue curOutCard;
 					curOutCard.m_color = m_curOutCard->m_color;
@@ -2202,6 +2222,11 @@ void GH_WuHan_XianTao::ThinkEnd()
 
 					m_video.AddOper(VIDEO_OPER_SHOUPAO, i, m_playerHuInfo[i].wincards);
 				}
+			}
+
+			if (hupaiNumber2 > 1)
+			{
+				m_zhuangpos = m_curPos;
 			}
 			OnGameOver(WIN_BOMB, m_beforePos);
 		}

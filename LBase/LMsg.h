@@ -3578,13 +3578,13 @@ struct LMsgS2CVipEnd :public LMsgSC
 	Lint	m_gold[4];//输赢积分总数
 	Lint	m_zimo[4];//自摸次数
 	Lint	m_bomb[4];//放炮次数
-	Lint	m_win[4];//收炮次数
+	Lint	m_win[4];// 胡牌次数
 	Lint	m_mgang[4];//明杠次数
 	Lint	m_agang[4];//暗杠的次数
 
-	Lint	m_dzimo[4];//大胡自摸次数
-	Lint	m_dbomb[4];//大胡放炮次数
-	Lint	m_dwin[4];//大胡收炮次数
+	Lint	m_dzimo[4];// 坐庄次数
+	Lint	m_dbomb[4];// 飘癞子次数
+	Lint	m_dwin[4];// 超时次数
 
 	std::vector<Lint> m_oncegold[4]; //[bing] 每局的得分
 	std::vector<Lint> m_playPara;	//玩法参数
@@ -6027,6 +6027,8 @@ struct Gonghui
 		m_adminUserId = 0;
 		m_userCount = 0;
 		m_roomPolicy = "";
+		m_paijuCount = 0;
+		m_userCount = 0;
 	}
 
 	MSGPACK_DEFINE(m_gonghuiId, m_gonghuiName, m_adminUserId, m_roomPolicy, m_paijuCount, m_paijuInfo, m_userCount, m_userInfo);

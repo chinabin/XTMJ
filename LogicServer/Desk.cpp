@@ -107,49 +107,53 @@ void Desk::Tick(LTime& curr)
 
 	CheckAutoPlayCard();
 
-	if (m_gonghuiId != 0)
+	// 设置所有房间超时10分钟后自动解散
+	if (m_vip != NULL)
 	{
-		if (m_vip != NULL)
+		// TOOD 检测DESK_FREE状态下，超过10秒钟必须开始
+		if (0 != m_vip->m_curCircle && m_deskState == DESK_WAIT)
 		{
-			// TOOD 检测DESK_FREE状态下，超过10秒钟必须开始
-			if (0 != m_vip->m_curCircle && m_deskState == DESK_WAIT)
+			LTime curTime;
+			Lint timeDiff = curTime.Secs() - m_deskWaitTime;
+			if (timeDiff >= 10)
 			{
-				LTime curTime;
-				Lint timeDiff = curTime.Secs() - m_deskWaitTime;
-				if (timeDiff >= 10)
+				// 自动开始牌局
+				for (int i = 0; i < m_iPlayerCapacity; ++i)
 				{
-					// 自动开始牌局
-					for (int i = 0; i < m_iPlayerCapacity; ++i)
-					{
-						m_readyState[i] = 1;
-					}
-					CheckGameStart();
+					m_readyState[i] = 1;
 				}
+				CheckGameStart();
 			}
-			// TODO 检测DESK_PLAY状态下，超过600秒房间强制解散
-			if (m_deskState == DESK_PLAY)
+		}
+		// TODO 检测DESK_PLAY状态下，超过600秒房间强制解散
+		if (m_deskState == DESK_PLAY)
+		{
+			LTime curTime;
+			Lint timeDiff = curTime.Secs() - m_deskLastPlayTime;
+
+			if (timeDiff >= 15 && m_bRecoredTimeOut)
 			{
-				LTime curTime;
-				Lint timeDiff = curTime.Secs() - m_deskLastPlayTime;
-				
-				if (timeDiff >= 600)
+				updateTimeoutCount(mGameHandler->getCurPos());
+				m_bRecoredTimeOut = false;
+			}
+
+			if (timeDiff >= 600)
+			{
+				for (int i = 0; i < m_iPlayerCapacity; ++i)
 				{
-					for (int i = 0; i < m_iPlayerCapacity; ++i)
-					{
-						m_reset[i] = 1;
-					}
-					// TODO 自动解散房间
-					m_resetTime = m_deskLastPlayTime;
-					std::stringstream systemUser;
-					systemUser << "system_" << mGameHandler->getCurPos();
-					m_resetUser = systemUser.str();
-					LMsgC2SSelectResetDesk *resutMsg = new LMsgC2SSelectResetDesk();
-					resutMsg->m_pos = 0;
-					resutMsg->m_flag = 1;
-					LLOG_DEBUG("resetUser:%s,Send msg to deduct room, deskId=%d.", m_resetUser.c_str(), m_gonghuiId);
-					HanderSelectResutDesk(m_user[0], resutMsg);
-					delete resutMsg;
+					m_reset[i] = 1;
 				}
+				// TODO 自动解散房间
+				m_resetTime = m_deskLastPlayTime;
+				std::stringstream systemUser;
+				systemUser << "system_" << mGameHandler->getCurPos();
+				m_resetUser = systemUser.str();
+				LMsgC2SSelectResetDesk *resutMsg = new LMsgC2SSelectResetDesk();
+				resutMsg->m_pos = 0;
+				resutMsg->m_flag = 1;
+				LLOG_DEBUG("resetUser:%s,Send msg to deduct room, deskId=%d.", m_resetUser.c_str(), m_gonghuiId);
+				HanderSelectResutDesk(m_user[0], resutMsg);
+				delete resutMsg;
 			}
 		}
 	}
@@ -621,6 +625,7 @@ void Desk::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 		mGameHandler->HanderUserPlayCard(pUser, msg);
 		LTime cur;
 		m_deskLastPlayTime = cur.Secs();
+		m_bRecoredTimeOut = true;
 	}
 }
 
@@ -634,6 +639,7 @@ void Desk::HanderUserOperCard(User* pUser,LMsgC2SUserOper* msg)
 	if (mGameHandler)
 	{
 		mGameHandler->HanderUserOperCard(pUser, msg);
+		m_bRecoredTimeOut = true;
 	}
 }
 
@@ -1425,6 +1431,13 @@ void Desk::_clearData()
 	memset( m_autoPlay, 0, sizeof(m_autoPlay) );
 	memset( m_autoPlayTime, 0, sizeof(m_autoPlayTime) );
 	memset( m_autoOutTime, 0, sizeof(m_autoOutTime) );
+
+	memset(m_zhuangCount, 0, sizeof(m_zhuangCount));
+	memset(m_timeoutCount, 0, sizeof(m_timeoutCount));
+	memset(m_laiziCount, 0, sizeof(m_laiziCount));
+	memset(m_hupaiCount, 0, sizeof(m_hupaiCount));
+	m_bRecoredTimeOut = true;
+
 	m_autoChangeOutTime = 0;
 	m_autoPlayOutTime = 0;
 	m_baseScore = 1;
