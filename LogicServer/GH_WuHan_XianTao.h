@@ -101,6 +101,10 @@ protected:
 			thinkUnit.toString();
 		}
 	}
+
+	bool checkHasHu(ThinkVec thinkData);
+	bool isNeedAutoDeakCard();
+	void handleZimo();
 private:
 	Card*			m_louHuCard[DESK_USER_COUNT];		//是否有漏胡记录 *
 

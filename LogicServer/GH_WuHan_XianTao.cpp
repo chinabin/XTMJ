@@ -1625,6 +1625,30 @@ void GH_WuHan_XianTao::CheckStartPlayCard()
 	m_curGetCard = m_handCard[m_curPos].back();
 	m_needGetCard = true;
 }
+
+bool GH_WuHan_XianTao::checkHasHu(ThinkVec thinkData)
+{
+	for (Lsize i = 0; i < thinkData.size(); ++i)
+	{
+		if (thinkData[i].m_type == THINK_OPERATOR_BOMB)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool GH_WuHan_XianTao::isNeedAutoDeakCard()
+{
+	Lint cardNum = m_deskCard.size();
+	Lint playerNum = m_desk->GetPlayerCapacity();
+	if (playerNum > cardNum)
+	{
+		return true;
+	}
+	return false;
+}
+
 //摸牌
 void GH_WuHan_XianTao::SetPlayIng(Lint pos,bool needGetCard,bool gang, bool needThink, bool canhu)
 {
@@ -1650,6 +1674,8 @@ void GH_WuHan_XianTao::SetPlayIng(Lint pos,bool needGetCard,bool gang, bool need
 	{
 		m_beforePos = m_curPos;
 	}
+
+	bool isHuZiMO = false;
 
 	m_curPos = pos;
 
@@ -1695,11 +1721,18 @@ void GH_WuHan_XianTao::SetPlayIng(Lint pos,bool needGetCard,bool gang, bool need
 		m_gameInfo.b_userPlayCard = b_userPlayCard[pos];
 
 		m_thinkInfo[pos].m_thinkData = gCB_WuHan_XianTao->CheckGetCardOperator(m_handCard[pos],m_pengCard[pos],m_abombCard[pos],m_gangCard[pos],m_eatCard[pos],m_curGetCard,m_gameInfo);
+		
+		if (needGetCard && checkHasHu(m_thinkInfo[pos].m_thinkData))
+		{
+			isHuZiMO = true;
+		}
+		
 		// 记录过手杠
 		if(m_gameInfo.m_pGscard)
 		{
 			m_gsCard[pos].push_back(m_gameInfo.m_pGscard);
 		}
+
 		VideoThink(pos);
 	}
 
@@ -1783,7 +1816,135 @@ void GH_WuHan_XianTao::SetPlayIng(Lint pos,bool needGetCard,bool gang, bool need
 			m_desk->m_user[i]->Send(msg);
 		}
 	}
+
+	if (isNeedAutoDeakCard())
+	{
+		boost::this_thread::sleep(boost::posix_time::seconds(1));
+		// 这里表示最后几张牌，自摸胡牌了，要么直接胡，要么自动发下一次牌
+		if (isHuZiMO)
+		{
+			// 胡牌，自摸，计分，发消息
+			handleZimo();
+		}
+		else
+		{
+			// 自动发牌
+			Lint nextPos = m_desk->GetNextPos(m_curPos);
+			m_curPos = nextPos;
+			SetPlayIng(nextPos, true, false, true, true);
+		}
+	}
 }
+
+void GH_WuHan_XianTao::handleZimo()
+{
+	LMsgS2CUserPlay sendMsg;
+	sendMsg.m_errorCode = 0;
+	sendMsg.m_pos = m_curPos;
+
+	ThinkData thinkInfo;
+	thinkInfo.m_type = THINK_OPERATOR_BOMB;
+	CardValue card;
+	card.m_color = m_curGetCard->m_color;
+	card.m_number = m_curGetCard->m_number;
+	thinkInfo.m_card.push_back(card);
+
+	sendMsg.m_card = thinkInfo;
+
+	Lint pos = m_curPos;
+	//录相;
+	VideoDoing(THINK_OPERATOR_BOMB, m_curPos, 0, 0);
+	m_desk->updateHupaiCount(pos);
+
+	bool hasLaizi = false;
+	if (m_curGetCard)
+	{
+		LLOG_DEBUG("zimo check: %d,%d;%d,%d.", m_curGetCard->m_color, m_curGetCard->m_number, m_ghostCardReal[0].m_color, m_ghostCardReal[0].m_number);
+		gCB_WuHan_XianTao->EraseCard(m_handCard[pos], m_curGetCard);
+		sendMsg.m_huCard.m_color = m_curGetCard->m_color;
+		sendMsg.m_huCard.m_number = m_curGetCard->m_number;
+
+		if (m_curGetCard->m_color == m_ghostCardReal[0].m_color && m_curGetCard->m_number == m_ghostCardReal[0].m_number)
+		{
+			hasLaizi = true;
+		}
+	}
+	
+	sendMsg.m_cardCount = m_handCard[pos].size();
+	for (Lint i = 0; i < sendMsg.m_cardCount; ++i)
+	{
+		CardValue mCard;
+		mCard.m_color = m_handCard[pos][i]->m_color;
+		mCard.m_number = m_handCard[pos][i]->m_number;
+		sendMsg.m_cardValue.push_back(mCard);
+
+		LLOG_DEBUG("zimo check: %d,%d;%d,%d.", mCard.m_color, mCard.m_number, m_ghostCardReal[0].m_color, m_ghostCardReal[0].m_number);
+		if (mCard.m_color == m_ghostCardReal[0].m_color && mCard.m_number == m_ghostCardReal[0].m_number)
+		{
+			hasLaizi = true;
+		}
+	}
+
+	// 手上没癞子自摸，翻4倍
+	// 手上有癞子，但是癞子作为本身使用，翻4倍
+	int doubleSize = 2;
+	LLOG_DEBUG("hasLaizi=%d.", hasLaizi);
+	if (hasLaizi)
+	{
+		if (gCB_WuHan_XianTao->CheckHoo(m_handCard[pos], m_curGetCard))
+		{
+			LLOG_DEBUG("true");
+			doubleSize = 4;
+		}
+		else
+		{
+			LLOG_DEBUG("false");
+		}
+	}
+	else
+	{
+		doubleSize = 4;
+	}
+
+	if (hasFourLaizi(m_curPos))
+	{
+		doubleSize = 2 * doubleSize;
+	}
+
+	int score = 0;
+	for (int i = 0; i < m_desk->GetPlayerCapacity(); ++i)
+	{
+		LLOG_DEBUG("pos=%d,baseScore=%d.", i, m_baseScore[i]);
+		if (i == m_curPos)
+		{
+			continue;
+		}
+		int tmpScore = doubleSize * m_desk->m_baseScore * m_baseScore[i] * m_baseScore[m_curPos];
+		sendMsg.m_addScore[i] = -tmpScore;
+		m_totalScore[i] += -tmpScore;
+		score += tmpScore;
+	}
+
+	sendMsg.m_addScore[m_curPos] = score;
+	m_totalScore[m_curPos] += score;
+	m_desk->BoadCast(sendMsg);
+
+	m_thinkRet[m_curPos] = m_thinkInfo[m_curPos].m_thinkData[0];
+	m_playerHuInfo[m_curPos].type = CheckIfBigHu(m_thinkRet[m_curPos].m_hu) ? WIN_SUB_DZIMO : WIN_SUB_ZIMO;
+
+	//录像
+	if (m_curGetCard)
+	{
+		CardValue curGetCard;
+		curGetCard.m_color = m_curGetCard->m_color;
+		curGetCard.m_number = m_curGetCard->m_number;
+		m_playerHuInfo[m_curPos].wincards.push_back(curGetCard);
+	}
+	m_video.AddOper(VIDEO_OPER_ZIMO, m_curPos, m_playerHuInfo[m_curPos].wincards);
+	m_zhuangpos = m_curPos;
+	OnGameOver(WIN_ZIMO, INVAILD_POS);
+}
+
 // 计算玩家得分
 void GH_WuHan_XianTao::calcUserScore(Lint result, Lint gold[], Lint& bombCount, Lint winPos[])
 {
