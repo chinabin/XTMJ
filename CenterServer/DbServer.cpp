@@ -15,6 +15,7 @@ bool DbServer::Init()
 	if ( m_dbsession )
 	{
 		delete m_dbsession;
+		m_dbsession = NULL;
 	}
 	m_dbsession = new LDBSession;
 	return m_dbsession->Init(gConfig.GetDbHost(),gConfig.GetDbUser(),gConfig.GetDbPass(),gConfig.GetDbName(),"utf8mb4",gConfig.GetDbPort());

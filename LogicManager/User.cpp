@@ -55,6 +55,7 @@ void User::Login()
 	Lint lastLoginTime = m_userData.m_lastLoginTime;
 	m_userData.m_lastLoginTime = now.Secs();
 	m_online = true;
+	LLOG_DEBUG("login user, nums=%d.", m_userData.m_numOfCard2s);
 	if(getUserLogicID() > 0)
 	{
 		if(gWork.isLogicServerExist(getUserLogicID()))

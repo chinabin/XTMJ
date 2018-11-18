@@ -538,6 +538,32 @@ void CardBase::DealCardTwo(CardVector& v1, CardVector& v2, CardVector& v3, CardV
 	SortCard(v2);
 }
 
+Card* CardBase::GetCardPointer(CardVector& handcard, Lint color, Lint number)
+{
+	for (Lsize i = 0; i < handcard.size(); ++i)
+	{
+		Card* pcard = handcard[i];
+		if (pcard->m_color == color && pcard->m_number == number)
+		{
+			return pcard;
+		}
+	}
+}
+
+Lint CardBase::GetCardNumber(CardVector& handcard, Lint color, Lint number)
+{
+	int sameCardNumber = 0;
+	for (Lsize i = 0; i < handcard.size(); ++i)
+	{
+		Card* pcard = handcard[i];
+		if (pcard->m_color == color && pcard->m_number == number)
+		{
+			++sameCardNumber;
+		}
+	}
+	return sameCardNumber;
+}
+
 // void CardBase::DealCard(CardVector& v1,CardVector& v2,CardVector& v3,CardVector& v4,CardVector& v5, bool needwind)
 // {
 // 	CardVector mCards;

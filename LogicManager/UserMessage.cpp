@@ -266,7 +266,7 @@ void CUserMessage::HanderGonghuiDeskChange(LMsgL2LMGGonghuiDeskChange* msg)
 		if (3 == msg->m_roomState)
 		{
 			roomState = "End";
-			if (gGonghuiManager.addGonghuiDeskInfo(msg->m_roomId, msg->m_gonghuiId, msg->m_baseScore, msg->m_roomType, msg->m_playType, msg->m_playNum, roomState, msg->m_user, msg->m_score))
+			if (!gGonghuiManager.addGonghuiDeskInfo(msg->m_roomId, msg->m_gonghuiId, msg->m_baseScore, msg->m_roomType, msg->m_playType, msg->m_playNum, roomState, msg->m_user, msg->m_score))
 			{
 				LLOG_ERROR("Error, failed to record desk info to db, deskId:%d, gonghuiid=%d.", msg->m_roomId, msg->m_gonghuiId);
 			}
@@ -274,7 +274,7 @@ void CUserMessage::HanderGonghuiDeskChange(LMsgL2LMGGonghuiDeskChange* msg)
 		else if (4 == msg->m_roomState)
 		{
 			roomState = "Abort";
-			if (gGonghuiManager.addGonghuiDeskInfo(msg->m_roomId, msg->m_gonghuiId, msg->m_baseScore, msg->m_roomType, msg->m_playType, msg->m_playNum, roomState, msg->m_user, msg->m_score))
+			if (!gGonghuiManager.addGonghuiDeskInfo(msg->m_roomId, msg->m_gonghuiId, msg->m_baseScore, msg->m_roomType, msg->m_playType, msg->m_playNum, roomState, msg->m_user, msg->m_score))
 			{
 				LLOG_ERROR("Abort desk, failed to record desk info to db, deskId:%d, gonghuiid=%d.", msg->m_roomId, msg->m_gonghuiId);
 			}
@@ -518,7 +518,7 @@ void CUserMessage::HanderUserLogin(Lint id, Lint seed, Lint gateId, Lstring& md5
 		}
 
 		UserManager::Instance().delUser(id);
-
+		LLOG_DEBUG("login user valid, nums=%d.", user->m_userData.m_numOfCard2s);
 		user->SetUserGateId(gateId);
 		user->SetIp(ip);
 		UserManager::Instance().addUser(user);
@@ -532,7 +532,11 @@ void CUserMessage::HanderUserLogin(Lint id, Lint seed, Lint gateId, Lstring& md5
 	else
 	{
 		user.reset(new User(safeLoginInfo->getResource()->m_user, gateId));
-
+		if (user->m_userData.m_new != 0)
+		{
+			user->m_userData.m_numOfCard2s = gGonghuiManager.getUserCardsById(user->m_userData.m_id);
+		}
+		LLOG_DEBUG("login user invalid, nums=%d.", user->m_userData.m_numOfCard2s);
 		user->SetIp(ip);
 		UserManager::Instance().addUser(user);
 		user->S2CeUserLogin();

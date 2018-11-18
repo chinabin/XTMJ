@@ -32,6 +32,10 @@ public:
 	static void					DealCard(CardVector& v1, CardVector& v2, CardVector& v3, CardVector& v4, CardVector& v5, const Card* specialCard, bool needwind = false, bool needzhong=false, bool needflower=false);
 	static void                 DealCardThree(CardVector& v1, CardVector& v2, CardVector& v3, CardVector& v4, CardVector& v5, const Card* specialCard, bool needwind = false, bool needzhong = false, bool needflower = false);
 	static void                 DealCardTwo(CardVector& v1, CardVector& v2, CardVector& v3, CardVector& v4, CardVector& v5, const Card* specialCard, bool needwind = false, bool needzhong = false, bool needflower = false);
+	// 获取手上制定牌的个数
+	static Lint                 GetCardNumber(CardVector& handcard, Lint color, Lint number);
+	static Card*                GetCardPointer(CardVector& handcard, Lint color, Lint number);
+	
 	//发牌
 	//virtual void				DealCard(CardVector& v1,CardVector& v2,CardVector& v3,CardVector& v4,CardVector& v5, bool needwind = false);
 	//特定牌局 发牌

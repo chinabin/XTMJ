@@ -160,7 +160,7 @@ private:
 	Lint			m_endStartPos;    //海底牌结束位置
 	Lint			m_endStartCurPos; //海底牌当前位置
 	bool			m_needGetCard;
-	bool            b_userPlayCard[DESK_USER_COUNT];
+	bool            b_userPlayCard[DESK_USER_COUNT]; // 用户是否打过牌
 
 	CardVector		m_deskCard;       //桌子上剩余的牌
 

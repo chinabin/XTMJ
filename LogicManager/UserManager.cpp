@@ -113,7 +113,7 @@ boost::shared_ptr<CSafeResourceLock<User> > UserManager::getUserbyUserUUID(const
 {
 	boost::shared_ptr<User> user;
 
-	do 
+	do
 	{
 		boost::mutex::scoped_lock l(m_mutexUserQueue);
 

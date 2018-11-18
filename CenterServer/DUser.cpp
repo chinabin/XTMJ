@@ -35,7 +35,7 @@ void DUser::DelCardCount(Lint cardType, Lint count, Lint operType, const Lstring
 		m_usert.m_numOfCard2s -= count;
 	else
 		m_usert.m_numOfCard2s = 0;
-
+	
 	// 保存数据
 	gUserManager.SaveUser(this);
 	gUserManager.SaveCardInfo( this, cardType, /*delCount*/count, operType, admin );

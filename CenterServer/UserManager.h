@@ -23,6 +23,7 @@ public:
 public:
 	void LoadUserIdInfo(Lint serverID);
 	void loadGonghuiInfo(Lint serverID);
+	LUser getUserInfoById(int userId);
 public:
 	void SaveUser(DUser* user);
 	void SaveCardInfo(DUser* user,Lint cardType, Lint count, Lint operType, const Lstring& admin, const Lstring& remark="");

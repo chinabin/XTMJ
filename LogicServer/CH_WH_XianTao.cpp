@@ -155,6 +155,18 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 					result.push_back(unit);
 				}
 			}
+			else if (!gameInfo.b_userPlayCard)
+			{
+				if (GetCardNumber(handcard, color, number) >= 3)
+				{
+					LLOG_DEBUG("dachaotian");
+					unit.Clear();
+					unit.m_type = THINK_OPERATOR_AGANG;
+
+					unit.m_card.push_back(GetCardPointer(handcard, color, number));
+					result.push_back(unit);
+				}
+			}
 		}
 
 		vec.clear();

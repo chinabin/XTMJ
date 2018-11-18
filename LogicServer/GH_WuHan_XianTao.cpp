@@ -587,6 +587,7 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 				{
 					LLOG_DEBUG("true");
 					doubleSize = 4;
+					sendMsg.m_card.m_type = THINK_OPERATOR_HEIMO;
 				}
 				else
 				{
@@ -596,6 +597,7 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 			else
 			{
 				doubleSize = 4;
+				sendMsg.m_card.m_type = THINK_OPERATOR_HEIMO;
 			}
 
 			if (hasFourLaizi(m_curPos))
@@ -686,6 +688,7 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 			m_beforeType = THINK_OPERATOR_AGANG;
 			if (unit->m_card[0]->m_color == m_ghostCardFlop.m_color && unit->m_card[0]->m_number == m_ghostCardFlop.m_number)
 			{
+				m_curGetCard = NULL;
 				SetPlayIng(pos, false, true, true, true);
 			}
 			else
@@ -1293,6 +1296,9 @@ void GH_WuHan_XianTao::OnGameOver(Lint result,Lint bombpos)
 	}
 	LLOG_DEBUG("game over, score=%d,%d,%d,%d.", gold[0], gold[1], gold[2], gold[3]);
 	
+	// 最终结算消息晚3秒钟发送，方便查看当前牌局结果
+	boost::this_thread::sleep(boost::posix_time::seconds(3));
+
 	Lint zhuangPos = m_zhuangpos;
 	//计算庄
 	if (result == WIN_ZIMO)
@@ -1592,6 +1598,11 @@ void GH_WuHan_XianTao::DeakCard()
 			m_desk->m_user[i]->Send(msg);
 		}
 	}
+	// 为了保证癞子消息不丢失，游戏开始后重新发一次
+	LMsgS2CGhostCard ghoshCard;
+	ghoshCard.m_ghostCard.m_color = m_ghostCardFlop.m_color;
+	ghoshCard.m_ghostCard.m_number = m_ghostCardFlop.m_number;
+	m_desk->BoadCast(ghoshCard);
 
 	//SetPlaying();
 	//录像功能
@@ -1699,6 +1710,7 @@ void GH_WuHan_XianTao::SetPlayIng(Lint pos,bool needGetCard,bool gang, bool need
 		cards.push_back(card);
 		m_video.AddOper(VIDEO_OPER_GET_CARD, pos, cards);
 	}
+	
 	LLOG_DEBUG("needGetCard:%d, needThink:%d.", needGetCard, needThink);
 	if (needThink)
 	{
@@ -1895,6 +1907,7 @@ void GH_WuHan_XianTao::handleZimo()
 		{
 			LLOG_DEBUG("true");
 			doubleSize = 4;
+			sendMsg.m_card.m_type = THINK_OPERATOR_HEIMO;
 		}
 		else
 		{
@@ -1904,6 +1917,7 @@ void GH_WuHan_XianTao::handleZimo()
 	else
 	{
 		doubleSize = 4;
+		sendMsg.m_card.m_type = THINK_OPERATOR_HEIMO;
 	}
 
 	if (hasFourLaizi(m_curPos))

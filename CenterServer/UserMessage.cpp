@@ -420,7 +420,8 @@ void CUserMessage::SendUserLogin( const Lstring& uuid, LSocketPtr gameloginSP, L
 			break;
 		}
 		user->m_lastReqTime = m_tickTimer.Secs();
-
+		LUser tmpUser = gUserManager.getUserInfoById(user->m_usert.m_id);
+		user->m_usert.m_numOfCard2s = tmpUser.m_numOfCard2s;
 		LMsgCe2LUserLogin send;
 		send.m_seed = L_Rand(10000000, 99999999);
 		send.user = user->m_usert;
@@ -494,6 +495,8 @@ void CUserMessage::HanderLogicUserLogin(LMsgL2CeUserServerLogin* msg)
 
 	user->m_logicID = msg->m_serverID;
 	user->m_usert.m_lastLoginTime = m_tickTimer.Secs();
+	LUser tmpUser = gUserManager.getUserInfoById(user->m_usert.m_id);
+	user->m_usert.m_numOfCard2s = tmpUser.m_numOfCard2s;
 	gUserManager.SaveUserLastLogin(user.get());		//玩家最后登陆时间
 }
 
@@ -519,6 +522,8 @@ void CUserMessage::HanderLogicUserLogout(LMsgL2CeUserServerLogout* msg)
 	}
 
 	user->m_logicID = 0;
+	LUser tmpUser = gUserManager.getUserInfoById(user->m_usert.m_id);
+	user->m_usert.m_numOfCard2s = tmpUser.m_numOfCard2s;
 	gUserManager.SaveUser(user.get());		//玩家离线，保存玩家数据
 }
 

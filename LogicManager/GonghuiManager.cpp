@@ -333,6 +333,7 @@ Lint GonghuiManager::getUserCardsById(Lint userId)
 	}
 
 	mysql_free_result(res2);
+	LLOG_ERROR("userId=%d, cardNum=%d.", userId, userCards);
 	return userCards;
 }
 

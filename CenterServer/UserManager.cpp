@@ -32,6 +32,54 @@ bool UserManager::Init()
 	return true;
 }
 
+LUser UserManager::getUserInfoById(int userId)
+{
+	LUser tmpUser;
+
+	LDBSession dbSession;
+	if (!dbSession.Init(gConfig.GetDbHost(), gConfig.GetDbUser(), gConfig.GetDbPass(), gConfig.GetDbName(), "utf8mb4", gConfig.GetDbPort()))
+	{
+		LLOG_ERROR("UserManager::getUserInfoById Fail to init db session.");
+		return tmpUser;
+	}
+	
+	std::stringstream sql;
+	sql << "select NumsCard1,NumsCard2,NumsCard3 FROM user where id = " + std::to_string(userId);
+
+	LLOG_DEBUG("UserManager::getUserInfoById sqlStr=%s.", sql.str().c_str());
+	if (mysql_real_query(dbSession.GetMysql(), sql.str().c_str(), sql.str().size()))
+	{
+		LLOG_ERROR("DbServer::getUserInfoById sql error %s", mysql_error(dbSession.GetMysql()));
+		return tmpUser;
+	}
+
+	MYSQL_RES* res = mysql_store_result(dbSession.GetMysql());
+	if (res == NULL)
+	{
+		LLOG_ERROR("Fail to store result. Error = %s", mysql_error(dbSession.GetMysql()));
+		return tmpUser;
+	}
+
+	MYSQL_ROW row = mysql_fetch_row(res);
+	if (!row)
+	{
+		mysql_free_result(res);
+		return tmpUser;
+	}
+
+	while (row)
+	{
+		tmpUser.m_numOfCard1s = atoi(*row++);
+		tmpUser.m_numOfCard2s = atoi(*row++);
+		tmpUser.m_numOfCard3s = atoi(*row++);
+		LLOG_DEBUG("userId=%d, cardNums=%d,%d,%d.", userId, tmpUser.m_numOfCard1s, tmpUser.m_numOfCard2s, tmpUser.m_numOfCard3s);
+		row = mysql_fetch_row(res);
+	}
+
+	mysql_free_result(res);
+	return tmpUser;
+}
+
 void UserManager::addUser(boost::shared_ptr<DUser> user)
 {
 	if(user.get() == NULL)
