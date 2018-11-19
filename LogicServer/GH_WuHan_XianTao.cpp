@@ -701,6 +701,8 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 			int score = m_desk->m_baseScore * m_baseScore[m_curPos] * m_baseScore[m_beforePos];
 			sendMsg.m_addScore[m_curPos] = score;
 			sendMsg.m_addScore[m_beforePos] = -score;
+			m_totalScore[m_curPos] += score;
+			m_totalScore[m_beforePos] -= score;
 
 			//录相;
 			VideoDoing(unit->m_type,pos,unit->m_card[0]->m_color,unit->m_card[0]->m_number);
@@ -751,10 +753,12 @@ void GH_WuHan_XianTao::HanderUserPlayCard(User* pUser,LMsgC2SUserPlay* msg)
 				sendMsg.m_addScore[i] = -tmpScore;
 				m_beforeOpScore[i] = m_beforeOpScore[i] - tmpScore;
 				score += tmpScore;
+				m_totalScore[i] -= tmpScore;
 			}
 
 			sendMsg.m_addScore[m_curPos] = score;
 			m_beforeOpScore[m_curPos] = m_beforeOpScore[m_curPos] + score;
+			m_totalScore[m_curPos] += score;
 
 			//录相;
 			VideoDoing(unit->m_type,pos,unit->m_card[0]->m_color,unit->m_card[0]->m_number);
@@ -1295,9 +1299,6 @@ void GH_WuHan_XianTao::OnGameOver(Lint result,Lint bombpos)
 		m_totalScore[i] = 0;
 	}
 	LLOG_DEBUG("game over, score=%d,%d,%d,%d.", gold[0], gold[1], gold[2], gold[3]);
-	
-	// 最终结算消息晚3秒钟发送，方便查看当前牌局结果
-	boost::this_thread::sleep(boost::posix_time::seconds(3));
 
 	Lint zhuangPos = m_zhuangpos;
 	//计算庄

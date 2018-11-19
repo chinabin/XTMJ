@@ -135,7 +135,7 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 		}
 
 		vec.clear();
-		if (!gameInfo.bNoCard && getCard)
+		if (!gameInfo.bNoCard)
 		{
 			Lint color = gameInfo.m_hCard[0].m_color;
 			Lint number = gameInfo.m_hCard[0].m_number - 1;
@@ -143,8 +143,12 @@ ThinkVec CH_WuHan_XianTao::CheckGetCardOperator(CardVector& handcard, CardVector
 			{
 				number = 9;
 			}
-			LLOG_DEBUG("check dachaotian, ghostFlop=%d,%d;getcard:%d,%d.", color, number, getCard->m_color, getCard->m_number);
-			if (getCard->m_color == color && getCard->m_number == number)
+			if (getCard)
+			{
+				LLOG_DEBUG("check dachaotian, ghostFlop=%d,%d;getcard:%d,%d.", color, number, getCard->m_color, getCard->m_number);
+			}
+			
+			if (getCard && getCard->m_color == color && getCard->m_number == number)
 			{
 				if (CheckCanPeng(handcard, getCard))
 				{
