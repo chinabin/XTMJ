@@ -3152,5 +3152,14 @@ bool GH_WuHan_XianTao::hasFourLaizi(Lint pos)
 			laiziCount++;
 		}
 	}
+
+	// 如果是当前打牌用户，需要加上m_curGetCard判断逻辑
+	if (m_curPos == pos)
+	{
+		if (m_curGetCard && m_curGetCard->m_color == m_ghostCardReal[0].m_color && m_curGetCard->m_number == m_ghostCardReal[0].m_number)
+		{
+			laiziCount++;
+		}
+	}
 	return (laiziCount == 4);
 }
