@@ -270,6 +270,8 @@ void CUserMessage::HanderGonghuiDeskChange(LMsgL2LMGGonghuiDeskChange* msg)
 			{
 				LLOG_ERROR("Error, failed to record desk info to db, deskId:%d, gonghuiid=%d.", msg->m_roomId, msg->m_gonghuiId);
 			}
+
+			gUserManager.delGonghuiPaiju(msg->m_gonghuiId, msg->m_roomId);
 		}
 		else if (4 == msg->m_roomState)
 		{
@@ -278,6 +280,7 @@ void CUserMessage::HanderGonghuiDeskChange(LMsgL2LMGGonghuiDeskChange* msg)
 			{
 				LLOG_ERROR("Abort desk, failed to record desk info to db, deskId:%d, gonghuiid=%d.", msg->m_roomId, msg->m_gonghuiId);
 			}
+			gUserManager.delGonghuiPaiju(msg->m_gonghuiId, msg->m_roomId);
 		}
 	}
 

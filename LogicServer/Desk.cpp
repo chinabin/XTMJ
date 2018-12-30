@@ -1316,7 +1316,7 @@ void Desk::HanderGameOver(Lint result)
 		}
 	}
 
-	LLOG_ERROR("game info, maxCircle=%d, curCircle=%d,isReset=%d.", m_vip->m_maxCircle, m_vip->m_curCircle, m_vip->m_reset);
+	LLOG_ERROR("game info, deskId=%d, maxCircle=%d, curCircle=%d,isReset=%d.", m_vip->m_deskId, m_vip->m_maxCircle, m_vip->m_curCircle, m_vip->m_reset);
 	if(m_vip->isNormalEnd())
 	{
 		if(m_deskType == DeskType_Common)

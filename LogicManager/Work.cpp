@@ -983,6 +983,10 @@ void Work::SendMessageToGate(Lint gateID, LMsg& msg)
 	{
 		gate->second.m_sp->Send(msg.GetSendBuff());
 	}
+	else
+	{
+		LLOG_ERROR("Error, Failed to find gateId:%d.", gateID);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
